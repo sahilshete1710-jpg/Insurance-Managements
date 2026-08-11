@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -1277,7 +1278,7 @@ def reports_page():
 
 def profile_page():
 
-    st.markdown('<div class="page-title-premium">')👤 My Profile</div><div class="page-sub-premium">Account and secure access information.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="page-title-premium">👤 My Profile</div><div class="page-sub-premium">Account and secure access information.</div>', unsafe_allow_html=True)
 
     user = st.session_state.user
 
