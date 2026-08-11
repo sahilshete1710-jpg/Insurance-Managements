@@ -17,14 +17,23 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-def load_css():
-    with open("assets/style.css", "r", encoding="utf-8") as f:
-        st.markdown(
-            f"<style>{f.read()}</style>",
-            unsafe_allow_html=True
-        )
+from pathlib import Path
 
-load_css()
+
+def load_css():
+    css_file = Path(__file__).parent / "assets" / "style.css"
+
+    if css_file.exists():
+        with open(css_file, "r", encoding="utf-8") as f:
+            st.markdown(
+                f"<style>{f.read()}</style>",
+                unsafe_allow_html=True
+            )
+    else:
+        st.warning(
+            "⚠️ style.css was not found. "
+            "Please check that assets/style.css exists in your GitHub repository."
+        )
 
 # =========================================================
 # INITIALIZE DATABASE
