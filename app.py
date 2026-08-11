@@ -29,57 +29,308 @@ database.init_db()
 # CUSTOM CSS
 # =========================================================
 
+
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-.main {
-    background-color: #f5f7fb;
+:root {
+    --ink:#0f172a;
+    --muted:#64748b;
+    --purple:#6d28d9;
+    --indigo:#4f46e5;
+    --cyan:#0891b2;
+    --pink:#db2777;
+    --green:#059669;
+    --orange:#ea580c;
+}
+
+html, body, [class*="css"] {
+    font-family:'Inter',sans-serif;
+}
+
+.stApp {
+    background:
+      radial-gradient(circle at 5% 0%, rgba(124,58,237,.12), transparent 23%),
+      radial-gradient(circle at 96% 4%, rgba(6,182,212,.12), transparent 22%),
+      linear-gradient(135deg,#f8fafc 0%,#f5f3ff 45%,#ecfeff 100%);
+}
+
+.block-container {
+    max-width:1500px;
+    padding:1.35rem 2rem 3rem;
 }
 
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0f172a, #1e293b);
+    background:
+      radial-gradient(circle at 20% 10%,rgba(129,140,248,.22),transparent 25%),
+      linear-gradient(180deg,#0b1026 0%,#151b45 48%,#312e81 100%);
+    border-right:1px solid rgba(255,255,255,.08);
 }
 
-[data-testid="stSidebar"] * {
-    color: white;
+[data-testid="stSidebar"] * { color:#fff !important; }
+
+[data-testid="stSidebar"] .stRadio > div {
+    gap:6px;
 }
 
-h1, h2, h3 {
-    font-weight: 700;
+[data-testid="stSidebar"] .stRadio label {
+    padding:8px 10px;
+    border-radius:12px;
+    transition:.2s;
 }
 
-.dashboard-card {
-    background: white;
-    padding: 22px;
-    border-radius: 15px;
-    box-shadow: 0px 3px 15px rgba(0,0,0,0.08);
-    margin-bottom: 15px;
+[data-testid="stSidebar"] .stRadio label:hover {
+    background:rgba(255,255,255,.12);
 }
 
-.card-title {
-    font-size: 14px;
-    color: #64748b;
+.brand-premium {
+    text-align:center;
+    padding:6px 6px 20px;
 }
 
-.card-value {
-    font-size: 30px;
-    font-weight: bold;
-    color: #0f172a;
+.brand-shield {
+    width:68px;
+    height:68px;
+    margin:0 auto 10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:22px;
+    background:linear-gradient(135deg,#818cf8,#22d3ee);
+    box-shadow:0 12px 30px rgba(34,211,238,.22);
+    font-size:36px;
 }
 
-.login-box {
-    background: white;
-    padding: 35px;
-    border-radius: 18px;
-    box-shadow: 0px 5px 25px rgba(0,0,0,0.10);
+.brand-title {
+    font-size:19px;
+    font-weight:800;
+    letter-spacing:.5px;
 }
 
-.small-text {
-    color: #64748b;
+.brand-sub {
+    font-size:10px;
+    opacity:.6;
+    letter-spacing:2px;
+}
+
+.hero-premium {
+    position:relative;
+    overflow:hidden;
+    padding:30px 34px;
+    border-radius:28px;
+    color:#fff;
+    background:
+      radial-gradient(circle at 82% 20%,rgba(255,255,255,.25),transparent 16%),
+      radial-gradient(circle at 96% 100%,rgba(34,211,238,.32),transparent 30%),
+      linear-gradient(115deg,#312e81,#4f46e5 42%,#0891b2);
+    box-shadow:0 24px 60px rgba(49,46,129,.24);
+    margin-bottom:24px;
+}
+
+.hero-premium:after {
+    content:"";
+    position:absolute;
+    width:210px;
+    height:210px;
+    right:-70px;
+    top:-80px;
+    border-radius:50%;
+    border:35px solid rgba(255,255,255,.08);
+}
+
+.hero-kicker {
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    opacity:.72;
+    font-weight:700;
+}
+
+.hero-premium h1 {
+    margin:5px 0 7px;
+    font-size:32px;
+    font-weight:800;
+}
+
+.hero-premium p {
+    margin:0;
+    opacity:.82;
+}
+
+.kpi-premium {
+    position:relative;
+    overflow:hidden;
+    min-height:150px;
+    padding:20px;
+    border-radius:22px;
+    background:rgba(255,255,255,.92);
+    border:1px solid rgba(255,255,255,.95);
+    box-shadow:0 12px 32px rgba(15,23,42,.07);
+}
+
+.kpi-premium:before {
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:5px;
+    background:var(--accent,#4f46e5);
+}
+
+.kpi-icon-premium {
+    width:45px;
+    height:45px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:14px;
+    background:var(--soft,#eef2ff);
+    font-size:23px;
+}
+
+.kpi-label-premium {
+    color:#64748b;
+    font-size:12px;
+    font-weight:600;
+    margin-top:12px;
+}
+
+.kpi-value-premium {
+    color:#0f172a;
+    font-size:27px;
+    font-weight:800;
+    margin-top:2px;
+}
+
+.kpi-trend {
+    color:#059669;
+    font-size:11px;
+    font-weight:700;
+    margin-top:4px;
+}
+
+.section-premium {
+    background:rgba(255,255,255,.88);
+    border:1px solid rgba(226,232,240,.8);
+    border-radius:22px;
+    padding:20px;
+    margin-top:20px;
+    box-shadow:0 12px 35px rgba(15,23,42,.055);
+}
+
+.section-title {
+    font-size:17px;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:2px;
+}
+
+.section-sub {
+    font-size:12px;
+    color:#94a3b8;
+    margin-bottom:15px;
+}
+
+.page-title-premium {
+    font-size:31px;
+    line-height:1.1;
+    font-weight:800;
+    color:#111827;
+    margin-bottom:5px;
+}
+
+.page-sub-premium {
+    color:#64748b;
+    margin-bottom:22px;
+}
+
+.login-shell {
+    max-width:480px;
+    margin:7vh auto 0;
+}
+
+.login-card-premium {
+    padding:38px;
+    border-radius:28px;
+    background:rgba(255,255,255,.94);
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:0 30px 80px rgba(49,46,129,.18);
+    backdrop-filter:blur(18px);
+}
+
+.login-icon {
+    width:82px;
+    height:82px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 16px;
+    border-radius:26px;
+    background:linear-gradient(135deg,#4f46e5,#06b6d4);
+    box-shadow:0 16px 35px rgba(79,70,229,.28);
+    font-size:43px;
+}
+
+.login-title {
+    text-align:center;
+    font-size:30px;
+    font-weight:800;
+    color:#111827;
+}
+
+.login-sub {
+    text-align:center;
+    color:#64748b;
+    margin:5px 0 25px;
+}
+
+.stButton > button {
+    border-radius:13px;
+    min-height:43px;
+    font-weight:700;
+    transition:.2s;
+}
+
+.stButton > button:hover {
+    transform:translateY(-1px);
+    box-shadow:0 8px 20px rgba(79,70,229,.16);
+}
+
+div[data-testid="stMetric"] {
+    background:rgba(255,255,255,.9);
+    border:1px solid #eef2ff;
+    border-radius:16px;
+    box-shadow:0 8px 25px rgba(15,23,42,.05);
+}
+
+[data-testid="stDataFrame"] {
+    border-radius:15px;
+    overflow:hidden;
+}
+
+div[data-baseweb="tab-list"] {
+    gap:8px;
+}
+
+button[data-baseweb="tab"] {
+    border-radius:10px;
+    font-weight:700;
+}
+
+.insight {
+    padding:15px 17px;
+    border-radius:16px;
+    background:linear-gradient(135deg,#eef2ff,#ecfeff);
+    border:1px solid #dbeafe;
+    color:#334155;
+    font-size:13px;
 }
 
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # =========================================================
@@ -99,67 +350,29 @@ if "user" not in st.session_state:
 
 def login_page():
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="login-shell">
+        <div class="login-card-premium">
+            <div class="login-icon">🛡️</div>
+            <div class="login-title">Smart Insurance</div>
+            <div class="login-sub">Premium Insurance Management Platform</div>
+    """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 2, 1])
+    username = st.text_input("Username", placeholder="Enter username")
+    password = st.text_input("Password", type="password", placeholder="Enter password")
 
-    with col2:
+    if st.button("🔐  Sign In Securely", use_container_width=True, type="primary"):
+        user = database.authenticate_user(username, password)
+        if user:
+            st.session_state.logged_in = True
+            st.session_state.user = user
+            st.success("Login successful!")
+            st.rerun()
+        else:
+            st.error("Invalid username or password.")
 
-        st.markdown("""
-        <div class="login-box">
-
-        <h1 style="text-align:center;">
-        🛡️ Smart Insurance
-        </h1>
-
-        <p style="text-align:center;color:#64748b;">
-        Insurance Management System
-        </p>
-
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.write("")
-
-        username = st.text_input(
-            "Username",
-            placeholder="Enter username"
-        )
-
-        password = st.text_input(
-            "Password",
-            type="password",
-            placeholder="Enter password"
-        )
-
-        if st.button(
-            "🔐 Login",
-            use_container_width=True,
-            type="primary"
-        ):
-
-            user = database.authenticate_user(
-                username,
-                password
-            )
-
-            if user:
-
-                st.session_state.logged_in = True
-                st.session_state.user = user
-
-                st.success("Login successful!")
-                st.rerun()
-
-            else:
-
-                st.error(
-                    "Invalid username or password."
-                )
-
-        st.info(
-            "Default Login: admin / admin123"
-        )
+    st.info("Demo Login  •  admin / admin123")
+    st.markdown("</div></div>", unsafe_allow_html=True)
 
 
 # =========================================================
@@ -168,117 +381,130 @@ def login_page():
 
 def dashboard():
 
-    st.title("📊 Dashboard")
-
-    st.write(
-        f"Welcome back, **{st.session_state.user['full_name']}**"
-    )
-
     stats = database.get_dashboard_stats()
+    user = st.session_state.user
 
-    col1, col2, col3, col4 = st.columns(4)
+    st.markdown(f"""
+    <div class="hero-premium">
+        <div class="hero-kicker">Smart Insurance • Executive Dashboard</div>
+        <h1>Welcome back, {user['full_name']} 👋</h1>
+        <p>Everything you need to monitor policies, claims, customers and premium revenue.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    with col1:
+    cards = [
+        ("👥","Total Customers",f"{stats['customers']:,}","#4f46e5","#eef2ff","Live records"),
+        ("🛡️","Active Policies",f"{stats['policies']:,}","#0891b2","#ecfeff","Policy portfolio"),
+        ("📑","Pending Claims",f"{stats['pending_claims']:,}","#ea580c","#fff7ed","Needs attention"),
+        ("💰","Total Revenue",f"₹{stats['revenue']:,.0f}","#059669","#ecfdf5","Paid premiums")
+    ]
 
-        st.markdown(f"""
-        <div class="dashboard-card">
-        <div class="card-title">Total Customers</div>
-        <div class="card-value">{stats['customers']}</div>
-        👥
-        </div>
-        """, unsafe_allow_html=True)
+    cols = st.columns(4)
+    for col, (icon,label,value,accent,soft,note) in zip(cols,cards):
+        with col:
+            st.markdown(f"""
+            <div class="kpi-premium" style="--accent:{accent};">
+                <div class="kpi-icon-premium" style="--soft:{soft};">{icon}</div>
+                <div class="kpi-label-premium">{label}</div>
+                <div class="kpi-value-premium">{value}</div>
+                <div class="kpi-trend">● {note}</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-    with col2:
+    st.markdown("""
+    <div class="section-premium">
+        <div class="section-title">📌 Portfolio Intelligence</div>
+        <div class="section-sub">A quick visual summary of your insurance business.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div class="dashboard-card">
-        <div class="card-title">Active Policies</div>
-        <div class="card-value">{stats['policies']}</div>
-        📋
-        </div>
-        """, unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
 
-    with col3:
-
-        st.markdown(f"""
-        <div class="dashboard-card">
-        <div class="card-title">Pending Claims</div>
-        <div class="card-value">{stats['pending_claims']}</div>
-        📑
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col4:
-
-        st.markdown(f"""
-        <div class="dashboard-card">
-        <div class="card-title">Revenue</div>
-        <div class="card-value">₹{stats['revenue']:,.0f}</div>
-        💰
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.divider()
-
-    col1, col2 = st.columns(2)
-
-    # POLICY CHART
-    with col1:
-
-        st.subheader("📋 Policy Categories")
-
+    with c1:
+        st.markdown('<div class="section-premium">', unsafe_allow_html=True)
+        st.subheader("🛡️ Policy Portfolio")
         categories = database.get_policy_categories()
-
         if categories:
-
             df = pd.DataFrame(categories)
-
             fig = px.pie(
-                df,
-                names="category",
-                values="total",
-                hole=0.45
+                df, names="category", values="total", hole=.62,
+                template="plotly_white"
             )
-
-            st.plotly_chart(
-                fig,
-                use_container_width=True
+            fig.update_traces(
+                textposition="outside",
+                textinfo="percent+label",
+                marker=dict(line=dict(color="white", width=3))
             )
-
+            fig.update_layout(
+                height=350,
+                margin=dict(l=10,r=10,t=10,b=10),
+                showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)"
+            )
+            st.plotly_chart(fig, use_container_width=True)
         else:
+            st.info("Add policies to unlock portfolio analytics.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-            st.info(
-                "No policy data available."
-            )
-
-    # CLAIM CHART
-    with col2:
-
-        st.subheader("📑 Claim Status")
-
+    with c2:
+        st.markdown('<div class="section-premium">', unsafe_allow_html=True)
+        st.subheader("📑 Claims Overview")
         claims = database.get_claim_status()
-
         if claims:
-
             df = pd.DataFrame(claims)
-
             fig = px.bar(
-                df,
-                x="status",
-                y="total",
-                text="total"
+                df, x="status", y="total", text="total",
+                template="plotly_white"
             )
-
-            st.plotly_chart(
-                fig,
-                use_container_width=True
+            fig.update_traces(
+                textposition="outside",
+                marker_line_width=0
             )
-
+            fig.update_layout(
+                height=350,
+                margin=dict(l=10,r=10,t=10,b=10),
+                paper_bgcolor="rgba(0,0,0,0)",
+                xaxis_title="",
+                yaxis_title="Claims"
+            )
+            st.plotly_chart(fig, use_container_width=True)
         else:
+            st.info("No claims available yet.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-            st.info(
-                "No claim data available."
-            )
+    st.markdown('<div class="section-premium">', unsafe_allow_html=True)
+    st.subheader("💹 Premium Revenue Trend")
+    revenue = database.get_monthly_revenue()
+    if revenue:
+        df = pd.DataFrame(revenue)
+        fig = px.area(
+            df, x="month", y="revenue", markers=True,
+            template="plotly_white"
+        )
+        fig.update_traces(line_width=3)
+        fig.update_layout(
+            height=330,
+            margin=dict(l=10,r=10,t=10,b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            xaxis_title="",
+            yaxis_title="Revenue (₹)"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.markdown(
+            '<div class="insight">💡 Record your first premium payment to see the live revenue trend here.</div>',
+            unsafe_allow_html=True
+        )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-premium">', unsafe_allow_html=True)
+    a,b,c = st.columns(3)
+    a.metric("👨‍💼 Agents", stats["agents"])
+    b.metric("📋 Total Claims", stats["claims"])
+    c.metric("⚡ Pending Ratio",
+             f"{(stats['pending_claims']/stats['claims']*100):.1f}%"
+             if stats["claims"] else "0%")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 # =========================================================
@@ -287,7 +513,7 @@ def dashboard():
 
 def customers_page():
 
-    st.title("👥 Customer Management")
+    st.markdown('<div class="page-title-premium">👥 Customer Management</div><div class="page-sub-premium">Create, search and manage your insurance customers.</div>', unsafe_allow_html=True)
 
     tab1, tab2 = st.tabs([
         "➕ Add Customer",
@@ -390,7 +616,7 @@ def customers_page():
 
 def policies_page():
 
-    st.title("📋 Insurance Policy Management")
+    st.markdown('<div class="page-title-premium">🛡️ Insurance Policy Management</div><div class="page-sub-premium">Create and monitor your insurance policy portfolio.</div>', unsafe_allow_html=True)
 
     customers = database.get_customers()
 
@@ -547,7 +773,7 @@ def policies_page():
 
 def agents_page():
 
-    st.title("👨‍💼 Agent Management")
+    st.markdown('<div class="page-title-premium">👨‍💼 Agent Management</div><div class="page-sub-premium">Manage agents, specializations and commissions.</div>', unsafe_allow_html=True)
 
     tab1, tab2 = st.tabs([
         "➕ Add Agent",
@@ -658,7 +884,7 @@ def agents_page():
 
 def claims_page():
 
-    st.title("📑 Claim Management")
+    st.markdown('<div class="page-title-premium">📑 Claim Management</div><div class="page-sub-premium">Submit, review and update insurance claims.</div>', unsafe_allow_html=True)
 
     customers = database.get_customers()
     policies = database.get_policies()
@@ -833,7 +1059,7 @@ def claims_page():
 
 def payments_page():
 
-    st.title("💳 Premium Payment Management")
+    st.markdown('<div class="page-title-premium">💳 Premium Payments</div><div class="page-sub-premium">Record premium payments and monitor transaction history.</div>', unsafe_allow_html=True)
 
     customers = database.get_customers()
     policies = database.get_policies()
@@ -959,7 +1185,7 @@ def payments_page():
 
 def reports_page():
 
-    st.title("📊 Reports & Analytics")
+    st.markdown('<div class="page-title-premium">📈 Reports & Analytics</div><div class="page-sub-premium">Explore live insurance performance and export reports.</div>', unsafe_allow_html=True)
 
     stats = database.get_dashboard_stats()
 
@@ -1051,7 +1277,7 @@ def reports_page():
 
 def profile_page():
 
-    st.title("👤 My Profile")
+    st.markdown('<div class="page-title-premium">👤 My Profile</div><div class="page-sub-premium">Account and secure access information.</div>', unsafe_allow_html=True)
 
     user = st.session_state.user
 
@@ -1100,9 +1326,11 @@ def main_app():
     with st.sidebar:
 
         st.markdown("""
-        <h2 style="text-align:center;">
-        🛡️ SIMS
-        </h2>
+        <div class="brand-premium">
+            <div class="brand-shield">🛡️</div>
+            <div class="brand-title">SMART INSURANCE</div>
+            <div class="brand-sub">MANAGEMENT SYSTEM</div>
+        </div>
         """, unsafe_allow_html=True)
 
         st.markdown(

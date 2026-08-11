@@ -635,3 +635,25 @@ def get_claim_status():
     conn.close()
 
     return [dict(row) for row in data]
+
+# ---------------------------------------------------------
+# MONTHLY REVENUE REPORT
+# ---------------------------------------------------------
+
+def get_monthly_revenue():
+
+    conn = get_connection()
+
+    data = conn.execute("""
+        SELECT
+            substr(payment_date, 1, 7) AS month,
+            COALESCE(SUM(amount), 0) AS revenue
+        FROM payments
+        WHERE status = 'Paid'
+        GROUP BY substr(payment_date, 1, 7)
+        ORDER BY month
+    """).fetchall()
+
+    conn.close()
+
+    return [dict(row) for row in data]
