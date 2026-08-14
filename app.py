@@ -1,1434 +1,1251 @@
-
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from datetime import date
-
-import database
+import mysql.connector
+from mysql.connector import Error
+from datetime import datetime
+import hashlib
 
 
 # =========================================================
-# PAGE CONFIGURATION
+# MYSQL CONFIGURATION
 # =========================================================
 
-st.set_page_config(
-    page_title="Smart Insurance Management System",
-    page_icon="🛡️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-from pathlib import Path
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": "YOUR_MYSQL_PASSWORD",
+    "database": "insurance_management"
+}
 
 
-def load_css():
-    css_file = Path(__file__).parent / "assets" / "style.css"
+# =========================================================
+# DATABASE CONNECTION
+# =========================================================
 
-    if css_file.exists():
-        with open(css_file, "r", encoding="utf-8") as f:
-            st.markdown(
-                f"<style>{f.read()}</style>",
-                unsafe_allow_html=True
-            )
-    else:
-        st.warning(
-            "⚠️ style.css was not found. "
-            "Please check that assets/style.css exists in your GitHub repository."
+def get_connection():
+
+    try:
+        connection = mysql.connector.connect(
+            host=DB_CONFIG["host"],
+            user=DB_CONFIG["user"],
+            password=DB_CONFIG["password"],
+            database=DB_CONFIG["database"]
         )
+
+        return connection
+
+    except Error as e:
+
+        print("MySQL Connection Error:", e)
+
+        return None
+
+
+# =========================================================
+# PASSWORD HASHING
+# =========================================================
+
+def hash_password(password):
+
+    return hashlib.sha256(
+        password.encode("utf-8")
+    ).hexdigest()
+
 
 # =========================================================
 # INITIALIZE DATABASE
 # =========================================================
 
-database.init_db()
+def init_db():
 
+    connection = get_connection()
 
-# =========================================================
-# CUSTOM CSS
-# =========================================================
+    if connection is None:
+        return False
 
+    cursor = connection.cursor()
 
-st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    try:
 
-:root {
-    --ink:#0f172a;
-    --muted:#64748b;
-    --purple:#6d28d9;
-    --indigo:#4f46e5;
-    --cyan:#0891b2;
-    --pink:#db2777;
-    --green:#059669;
-    --orange:#ea580c;
-}
+        # -------------------------------------------------
+        # USERS
+        # -------------------------------------------------
 
-html, body, [class*="css"] {
-    font-family:'Inter',sans-serif;
-}
-
-.stApp {
-    background:
-      radial-gradient(circle at 5% 0%, rgba(124,58,237,.12), transparent 23%),
-      radial-gradient(circle at 96% 4%, rgba(6,182,212,.12), transparent 22%),
-      linear-gradient(135deg,#f8fafc 0%,#f5f3ff 45%,#ecfeff 100%);
-}
-
-.block-container {
-    max-width:1500px;
-    padding:1.35rem 2rem 3rem;
-}
-
-[data-testid="stSidebar"] {
-    background:
-      radial-gradient(circle at 20% 10%,rgba(129,140,248,.22),transparent 25%),
-      linear-gradient(180deg,#0b1026 0%,#151b45 48%,#312e81 100%);
-    border-right:1px solid rgba(255,255,255,.08);
-}
-
-[data-testid="stSidebar"] * { color:#fff !important; }
-
-[data-testid="stSidebar"] .stRadio > div {
-    gap:6px;
-}
-
-[data-testid="stSidebar"] .stRadio label {
-    padding:8px 10px;
-    border-radius:12px;
-    transition:.2s;
-}
-
-[data-testid="stSidebar"] .stRadio label:hover {
-    background:rgba(255,255,255,.12);
-}
-
-.brand-premium {
-    text-align:center;
-    padding:6px 6px 20px;
-}
-
-.brand-shield {
-    width:68px;
-    height:68px;
-    margin:0 auto 10px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:22px;
-    background:linear-gradient(135deg,#818cf8,#22d3ee);
-    box-shadow:0 12px 30px rgba(34,211,238,.22);
-    font-size:36px;
-}
-
-.brand-title {
-    font-size:19px;
-    font-weight:800;
-    letter-spacing:.5px;
-}
-
-.brand-sub {
-    font-size:10px;
-    opacity:.6;
-    letter-spacing:2px;
-}
-
-.hero-premium {
-    position:relative;
-    overflow:hidden;
-    padding:30px 34px;
-    border-radius:28px;
-    color:#fff;
-    background:
-      radial-gradient(circle at 82% 20%,rgba(255,255,255,.25),transparent 16%),
-      radial-gradient(circle at 96% 100%,rgba(34,211,238,.32),transparent 30%),
-      linear-gradient(115deg,#312e81,#4f46e5 42%,#0891b2);
-    box-shadow:0 24px 60px rgba(49,46,129,.24);
-    margin-bottom:24px;
-}
-
-.hero-premium:after {
-    content:"";
-    position:absolute;
-    width:210px;
-    height:210px;
-    right:-70px;
-    top:-80px;
-    border-radius:50%;
-    border:35px solid rgba(255,255,255,.08);
-}
-
-.hero-kicker {
-    font-size:12px;
-    text-transform:uppercase;
-    letter-spacing:2px;
-    opacity:.72;
-    font-weight:700;
-}
-
-.hero-premium h1 {
-    margin:5px 0 7px;
-    font-size:32px;
-    font-weight:800;
-}
-
-.hero-premium p {
-    margin:0;
-    opacity:.82;
-}
-
-.kpi-premium {
-    position:relative;
-    overflow:hidden;
-    min-height:150px;
-    padding:20px;
-    border-radius:22px;
-    background:rgba(255,255,255,.92);
-    border:1px solid rgba(255,255,255,.95);
-    box-shadow:0 12px 32px rgba(15,23,42,.07);
-}
-
-.kpi-premium:before {
-    content:"";
-    position:absolute;
-    left:0;
-    top:0;
-    bottom:0;
-    width:5px;
-    background:var(--accent,#4f46e5);
-}
-
-.kpi-icon-premium {
-    width:45px;
-    height:45px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:14px;
-    background:var(--soft,#eef2ff);
-    font-size:23px;
-}
-
-.kpi-label-premium {
-    color:#64748b;
-    font-size:12px;
-    font-weight:600;
-    margin-top:12px;
-}
-
-.kpi-value-premium {
-    color:#0f172a;
-    font-size:27px;
-    font-weight:800;
-    margin-top:2px;
-}
-
-.kpi-trend {
-    color:#059669;
-    font-size:11px;
-    font-weight:700;
-    margin-top:4px;
-}
-
-.section-premium {
-    background:rgba(255,255,255,.88);
-    border:1px solid rgba(226,232,240,.8);
-    border-radius:22px;
-    padding:20px;
-    margin-top:20px;
-    box-shadow:0 12px 35px rgba(15,23,42,.055);
-}
-
-.section-title {
-    font-size:17px;
-    font-weight:800;
-    color:#111827;
-    margin-bottom:2px;
-}
-
-.section-sub {
-    font-size:12px;
-    color:#94a3b8;
-    margin-bottom:15px;
-}
-
-.page-title-premium {
-    font-size:31px;
-    line-height:1.1;
-    font-weight:800;
-    color:#111827;
-    margin-bottom:5px;
-}
-
-.page-sub-premium {
-    color:#64748b;
-    margin-bottom:22px;
-}
-
-.login-shell {
-    max-width:480px;
-    margin:7vh auto 0;
-}
-
-.login-card-premium {
-    padding:38px;
-    border-radius:28px;
-    background:rgba(255,255,255,.94);
-    border:1px solid rgba(255,255,255,.9);
-    box-shadow:0 30px 80px rgba(49,46,129,.18);
-    backdrop-filter:blur(18px);
-}
-
-.login-icon {
-    width:82px;
-    height:82px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    margin:0 auto 16px;
-    border-radius:26px;
-    background:linear-gradient(135deg,#4f46e5,#06b6d4);
-    box-shadow:0 16px 35px rgba(79,70,229,.28);
-    font-size:43px;
-}
-
-.login-title {
-    text-align:center;
-    font-size:30px;
-    font-weight:800;
-    color:#111827;
-}
-
-.login-sub {
-    text-align:center;
-    color:#64748b;
-    margin:5px 0 25px;
-}
-
-.stButton > button {
-    border-radius:13px;
-    min-height:43px;
-    font-weight:700;
-    transition:.2s;
-}
-
-.stButton > button:hover {
-    transform:translateY(-1px);
-    box-shadow:0 8px 20px rgba(79,70,229,.16);
-}
-
-div[data-testid="stMetric"] {
-    background:rgba(255,255,255,.9);
-    border:1px solid #eef2ff;
-    border-radius:16px;
-    box-shadow:0 8px 25px rgba(15,23,42,.05);
-}
-
-[data-testid="stDataFrame"] {
-    border-radius:15px;
-    overflow:hidden;
-}
-
-div[data-baseweb="tab-list"] {
-    gap:8px;
-}
-
-button[data-baseweb="tab"] {
-    border-radius:10px;
-    font-weight:700;
-}
-
-.insight {
-    padding:15px 17px;
-    border-radius:16px;
-    background:linear-gradient(135deg,#eef2ff,#ecfeff);
-    border:1px solid #dbeafe;
-    color:#334155;
-    font-size:13px;
-}
-
-</style>
-""", unsafe_allow_html=True)
-
-
-
-# =========================================================
-# SESSION STATE
-# =========================================================
-
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-if "user" not in st.session_state:
-    st.session_state.user = None
-
-
-# =========================================================
-# LOGIN PAGE
-# =========================================================
-
-def login_page():
-
-    st.markdown("""
-    <div class="login-shell">
-        <div class="login-card-premium">
-            <div class="login-icon">🛡️</div>
-            <div class="login-title">Smart Insurance</div>
-            <div class="login-sub">Premium Insurance Management Platform</div>
-    """, unsafe_allow_html=True)
-
-    username = st.text_input("Username", placeholder="Enter username")
-    password = st.text_input("Password", type="password", placeholder="Enter password")
-
-    if st.button("🔐  Sign In Securely", use_container_width=True, type="primary"):
-        user = database.authenticate_user(username, password)
-        if user:
-            st.session_state.logged_in = True
-            st.session_state.user = user
-            st.success("Login successful!")
-            st.rerun()
-        else:
-            st.error("Invalid username or password.")
-
-    st.info("Demo Login  •  admin / admin123")
-    st.markdown("</div></div>", unsafe_allow_html=True)
-
-
-# =========================================================
-# DASHBOARD
-# =========================================================
-
-def dashboard():
-
-    stats = database.get_dashboard_stats()
-    user = st.session_state.user
-
-    st.markdown(f"""
-    <div class="hero-premium">
-        <div class="hero-kicker">Smart Insurance • Executive Dashboard</div>
-        <h1>Welcome back, {user['full_name']} 👋</h1>
-        <p>Everything you need to monitor policies, claims, customers and premium revenue.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    cards = [
-        ("👥","Total Customers",f"{stats['customers']:,}","#4f46e5","#eef2ff","Live records"),
-        ("🛡️","Active Policies",f"{stats['policies']:,}","#0891b2","#ecfeff","Policy portfolio"),
-        ("📑","Pending Claims",f"{stats['pending_claims']:,}","#ea580c","#fff7ed","Needs attention"),
-        ("💰","Total Revenue",f"₹{stats['revenue']:,.0f}","#059669","#ecfdf5","Paid premiums")
-    ]
-
-    cols = st.columns(4)
-    for col, (icon,label,value,accent,soft,note) in zip(cols,cards):
-        with col:
-            st.markdown(f"""
-            <div class="kpi-premium" style="--accent:{accent};">
-                <div class="kpi-icon-premium" style="--soft:{soft};">{icon}</div>
-                <div class="kpi-label-premium">{label}</div>
-                <div class="kpi-value-premium">{value}</div>
-                <div class="kpi-trend">● {note}</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="section-premium">
-        <div class="section-title">📌 Portfolio Intelligence</div>
-        <div class="section-sub">A quick visual summary of your insurance business.</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    c1, c2 = st.columns(2)
-
-    with c1:
-        st.markdown('<div class="section-premium">', unsafe_allow_html=True)
-        st.subheader("🛡️ Policy Portfolio")
-        categories = database.get_policy_categories()
-        if categories:
-            df = pd.DataFrame(categories)
-            fig = px.pie(
-                df, names="category", values="total", hole=.62,
-                template="plotly_white"
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                full_name VARCHAR(150) NOT NULL,
+                role VARCHAR(50) NOT NULL,
+                email VARCHAR(150),
+                created_at DATETIME
             )
-            fig.update_traces(
-                textposition="outside",
-                textinfo="percent+label",
-                marker=dict(line=dict(color="white", width=3))
+        """)
+
+        # -------------------------------------------------
+        # CUSTOMERS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS customers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(150) NOT NULL,
+                email VARCHAR(150),
+                phone VARCHAR(30),
+                address TEXT,
+                dob DATE,
+                gender VARCHAR(30),
+                created_at DATETIME
             )
-            fig.update_layout(
-                height=350,
-                margin=dict(l=10,r=10,t=10,b=10),
-                showlegend=False,
-                paper_bgcolor="rgba(0,0,0,0)"
+        """)
+
+        # -------------------------------------------------
+        # POLICIES
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS policies (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                policy_number VARCHAR(100) UNIQUE NOT NULL,
+                customer_id INT,
+                policy_name VARCHAR(150) NOT NULL,
+                category VARCHAR(100) NOT NULL,
+                premium DECIMAL(15,2) DEFAULT 0,
+                coverage_amount DECIMAL(15,2) DEFAULT 0,
+                start_date DATE,
+                end_date DATE,
+                status VARCHAR(50) DEFAULT 'Active',
+
+                FOREIGN KEY (customer_id)
+                    REFERENCES customers(id)
+                    ON DELETE SET NULL
             )
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("Add policies to unlock portfolio analytics.")
-        st.markdown('</div>', unsafe_allow_html=True)
+        """)
 
-    with c2:
-        st.markdown('<div class="section-premium">', unsafe_allow_html=True)
-        st.subheader("📑 Claims Overview")
-        claims = database.get_claim_status()
-        if claims:
-            df = pd.DataFrame(claims)
-            fig = px.bar(
-                df, x="status", y="total", text="total",
-                template="plotly_white"
+        # -------------------------------------------------
+        # AGENTS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agents (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(150) NOT NULL,
+                email VARCHAR(150),
+                phone VARCHAR(30),
+                specialization VARCHAR(100),
+                commission DECIMAL(10,2) DEFAULT 0,
+                status VARCHAR(50) DEFAULT 'Active',
+                created_at DATETIME
             )
-            fig.update_traces(
-                textposition="outside",
-                marker_line_width=0
+        """)
+
+        # -------------------------------------------------
+        # CLAIMS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS claims (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                claim_number VARCHAR(100) UNIQUE NOT NULL,
+                customer_id INT,
+                policy_id INT,
+                claim_amount DECIMAL(15,2) DEFAULT 0,
+                claim_date DATE,
+                description TEXT,
+                status VARCHAR(50) DEFAULT 'Pending',
+
+                FOREIGN KEY (customer_id)
+                    REFERENCES customers(id)
+                    ON DELETE SET NULL,
+
+                FOREIGN KEY (policy_id)
+                    REFERENCES policies(id)
+                    ON DELETE SET NULL
             )
-            fig.update_layout(
-                height=350,
-                margin=dict(l=10,r=10,t=10,b=10),
-                paper_bgcolor="rgba(0,0,0,0)",
-                xaxis_title="",
-                yaxis_title="Claims"
+        """)
+
+        # -------------------------------------------------
+        # PAYMENTS
+        # -------------------------------------------------
+
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS payments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                payment_number VARCHAR(100) UNIQUE NOT NULL,
+                customer_id INT,
+                policy_id INT,
+                amount DECIMAL(15,2) DEFAULT 0,
+                payment_date DATE,
+                payment_method VARCHAR(50),
+                status VARCHAR(50) DEFAULT 'Paid',
+
+                FOREIGN KEY (customer_id)
+                    REFERENCES customers(id)
+                    ON DELETE SET NULL,
+
+                FOREIGN KEY (policy_id)
+                    REFERENCES policies(id)
+                    ON DELETE SET NULL
             )
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("No claims available yet.")
-        st.markdown('</div>', unsafe_allow_html=True)
+        """)
 
-    st.markdown('<div class="section-premium">', unsafe_allow_html=True)
-    st.subheader("💹 Premium Revenue Trend")
-    revenue = database.get_monthly_revenue()
-    if revenue:
-        df = pd.DataFrame(revenue)
-        fig = px.area(
-            df, x="month", y="revenue", markers=True,
-            template="plotly_white"
-        )
-        fig.update_traces(line_width=3)
-        fig.update_layout(
-            height=330,
-            margin=dict(l=10,r=10,t=10,b=10),
-            paper_bgcolor="rgba(0,0,0,0)",
-            xaxis_title="",
-            yaxis_title="Revenue (₹)"
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.markdown(
-            '<div class="insight">💡 Record your first premium payment to see the live revenue trend here.</div>',
-            unsafe_allow_html=True
-        )
-    st.markdown('</div>', unsafe_allow_html=True)
+        # -------------------------------------------------
+        # DEFAULT ADMIN
+        # -------------------------------------------------
 
-    st.markdown('<div class="section-premium">', unsafe_allow_html=True)
-    a,b,c = st.columns(3)
-    a.metric("👨‍💼 Agents", stats["agents"])
-    b.metric("📋 Total Claims", stats["claims"])
-    c.metric("⚡ Pending Ratio",
-             f"{(stats['pending_claims']/stats['claims']*100):.1f}%"
-             if stats["claims"] else "0%")
-    st.markdown('</div>', unsafe_allow_html=True)
+        cursor.execute("""
+            SELECT id
+            FROM users
+            WHERE username = %s
+        """, ("admin",))
 
+        admin = cursor.fetchone()
 
-# =========================================================
-# CUSTOMERS
-# =========================================================
+        if admin is None:
 
-def customers_page():
-
-    st.markdown('<div class="page-title-premium">👥 Customer Management</div><div class="page-sub-premium">Create, search and manage your insurance customers.</div>', unsafe_allow_html=True)
-
-    tab1, tab2 = st.tabs([
-        "➕ Add Customer",
-        "📋 Customer Records"
-    ])
-
-    with tab1:
-
-        with st.form("customer_form"):
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                name = st.text_input(
-                    "Full Name *"
+            cursor.execute("""
+                INSERT INTO users
+                (
+                    username,
+                    password,
+                    full_name,
+                    role,
+                    email,
+                    created_at
                 )
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (
+                "admin",
+                hash_password("admin123"),
+                "System Administrator",
+                "Admin",
+                "admin@insurance.com",
+                datetime.now()
+            ))
 
-                email = st.text_input(
-                    "Email"
-                )
+        connection.commit()
 
-                phone = st.text_input(
-                    "Phone"
-                )
+        return True
 
-            with col2:
+    except Error as e:
 
-                dob = st.date_input(
-                    "Date of Birth"
-                )
+        print("Database Initialization Error:", e)
 
-                gender = st.selectbox(
-                    "Gender",
-                    [
-                        "Male",
-                        "Female",
-                        "Other"
-                    ]
-                )
+        return False
 
-                address = st.text_area(
-                    "Address"
-                )
+    finally:
 
-            submit = st.form_submit_button(
-                "Add Customer",
-                type="primary"
-            )
-
-            if submit:
-
-                if not name:
-
-                    st.error(
-                        "Customer name is required."
-                    )
-
-                else:
-
-                    database.add_customer(
-                        name,
-                        email,
-                        phone,
-                        address,
-                        str(dob),
-                        gender
-                    )
-
-                    st.success(
-                        "Customer added successfully!"
-                    )
-
-                    st.rerun()
-
-    with tab2:
-
-        customers = database.get_customers()
-
-        if customers:
-
-            df = pd.DataFrame(customers)
-
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True
-            )
-
-        else:
-
-            st.info(
-                "No customers found."
-            )
+        cursor.close()
+        connection.close()
 
 
 # =========================================================
-# POLICIES
+# LOGIN
 # =========================================================
 
-def policies_page():
+def authenticate_user(username, password):
 
-    st.markdown('<div class="page-title-premium">🛡️ Insurance Policy Management</div><div class="page-sub-premium">Create and monitor your insurance policy portfolio.</div>', unsafe_allow_html=True)
+    connection = get_connection()
 
-    customers = database.get_customers()
+    if connection is None:
+        return None
 
-    if not customers:
+    cursor = connection.cursor(dictionary=True)
 
-        st.warning(
-            "Please add a customer before creating a policy."
-        )
+    try:
 
-        return
+        cursor.execute("""
+            SELECT *
+            FROM users
+            WHERE username = %s
+            AND password = %s
+        """, (
+            username,
+            hash_password(password)
+        ))
 
-    customer_options = {
-        f"{c['name']} - ID {c['id']}": c["id"]
-        for c in customers
-    }
+        return cursor.fetchone()
 
-    tab1, tab2 = st.tabs([
-        "➕ Add Policy",
-        "📋 Policy Records"
-    ])
+    except Error as e:
 
-    with tab1:
+        print("Login Error:", e)
 
-        with st.form("policy_form"):
+        return None
 
-            col1, col2 = st.columns(2)
+    finally:
 
-            with col1:
-
-                policy_number = st.text_input(
-                    "Policy Number *",
-                    placeholder="POL-1001"
-                )
-
-                policy_name = st.text_input(
-                    "Policy Name *",
-                    placeholder="Health Insurance"
-                )
-
-                category = st.selectbox(
-                    "Category",
-                    [
-                        "Life Insurance",
-                        "Health Insurance",
-                        "Vehicle Insurance",
-                        "Travel Insurance",
-                        "Home Insurance",
-                        "Education Insurance"
-                    ]
-                )
-
-                customer = st.selectbox(
-                    "Customer",
-                    list(customer_options.keys())
-                )
-
-            with col2:
-
-                premium = st.number_input(
-                    "Premium Amount",
-                    min_value=0.0,
-                    step=500.0
-                )
-
-                coverage = st.number_input(
-                    "Coverage Amount",
-                    min_value=0.0,
-                    step=10000.0
-                )
-
-                start_date = st.date_input(
-                    "Start Date"
-                )
-
-                end_date = st.date_input(
-                    "End Date"
-                )
-
-                status = st.selectbox(
-                    "Status",
-                    [
-                        "Active",
-                        "Expired",
-                        "Pending",
-                        "Cancelled"
-                    ]
-                )
-
-            submit = st.form_submit_button(
-                "Create Policy",
-                type="primary"
-            )
-
-            if submit:
-
-                if not policy_number or not policy_name:
-
-                    st.error(
-                        "Policy number and policy name are required."
-                    )
-
-                else:
-
-                    result = database.add_policy(
-                        policy_number,
-                        customer_options[customer],
-                        policy_name,
-                        category,
-                        premium,
-                        coverage,
-                        str(start_date),
-                        str(end_date),
-                        status
-                    )
-
-                    if result:
-
-                        st.success(
-                            "Policy created successfully!"
-                        )
-
-                        st.rerun()
-
-                    else:
-
-                        st.error(
-                            "Policy number already exists."
-                        )
-
-    with tab2:
-
-        policies = database.get_policies()
-
-        if policies:
-
-            df = pd.DataFrame(policies)
-
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True
-            )
-
-        else:
-
-            st.info(
-                "No policies found."
-            )
+        cursor.close()
+        connection.close()
 
 
 # =========================================================
-# AGENTS
+# USER MANAGEMENT
 # =========================================================
 
-def agents_page():
+def add_user(
+    username,
+    password,
+    full_name,
+    role,
+    email
+):
 
-    st.markdown('<div class="page-title-premium">👨‍💼 Agent Management</div><div class="page-sub-premium">Manage agents, specializations and commissions.</div>', unsafe_allow_html=True)
+    connection = get_connection()
 
-    tab1, tab2 = st.tabs([
-        "➕ Add Agent",
-        "📋 Agent Records"
-    ])
+    if connection is None:
+        return False
 
-    with tab1:
+    cursor = connection.cursor()
 
-        with st.form("agent_form"):
+    try:
 
-            col1, col2 = st.columns(2)
-
-            with col1:
-
-                name = st.text_input(
-                    "Agent Name *"
-                )
-
-                email = st.text_input(
-                    "Email"
-                )
-
-                phone = st.text_input(
-                    "Phone"
-                )
-
-            with col2:
-
-                specialization = st.selectbox(
-                    "Specialization",
-                    [
-                        "Life Insurance",
-                        "Health Insurance",
-                        "Vehicle Insurance",
-                        "General Insurance"
-                    ]
-                )
-
-                commission = st.number_input(
-                    "Commission (%)",
-                    min_value=0.0,
-                    max_value=100.0,
-                    value=5.0
-                )
-
-                status = st.selectbox(
-                    "Status",
-                    [
-                        "Active",
-                        "Inactive"
-                    ]
-                )
-
-            submit = st.form_submit_button(
-                "Add Agent",
-                type="primary"
+        cursor.execute("""
+            INSERT INTO users
+            (
+                username,
+                password,
+                full_name,
+                role,
+                email,
+                created_at
             )
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            username,
+            hash_password(password),
+            full_name,
+            role,
+            email,
+            datetime.now()
+        ))
 
-            if submit:
+        connection.commit()
 
-                if not name:
+        return True
 
-                    st.error(
-                        "Agent name is required."
-                    )
+    except Error as e:
 
-                else:
+        print("Add User Error:", e)
 
-                    database.add_agent(
-                        name,
-                        email,
-                        phone,
-                        specialization,
-                        commission,
-                        status
-                    )
+        return False
 
-                    st.success(
-                        "Agent added successfully!"
-                    )
+    finally:
 
-                    st.rerun()
+        cursor.close()
+        connection.close()
 
-    with tab2:
 
-        agents = database.get_agents()
+def get_users():
 
-        if agents:
+    connection = get_connection()
 
-            df = pd.DataFrame(agents)
+    if connection is None:
+        return []
 
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True
-            )
+    cursor = connection.cursor(dictionary=True)
 
-        else:
+    try:
 
-            st.info(
-                "No agents found."
-            )
+        cursor.execute("""
+            SELECT
+                id,
+                username,
+                full_name,
+                role,
+                email,
+                created_at
+            FROM users
+            ORDER BY id DESC
+        """)
+
+        return cursor.fetchall()
+
+    except Error as e:
+
+        print("Get Users Error:", e)
+
+        return []
+
+    finally:
+
+        cursor.close()
+        connection.close()
 
 
 # =========================================================
-# CLAIMS
+# CUSTOMER MANAGEMENT
 # =========================================================
 
-def claims_page():
+def add_customer(
+    name,
+    email,
+    phone,
+    address,
+    dob,
+    gender
+):
 
-    st.markdown('<div class="page-title-premium">📑 Claim Management</div><div class="page-sub-premium">Submit, review and update insurance claims.</div>', unsafe_allow_html=True)
+    connection = get_connection()
 
-    customers = database.get_customers()
-    policies = database.get_policies()
+    if connection is None:
+        return False
 
-    if not customers:
+    cursor = connection.cursor()
 
-        st.warning(
-            "Please add customers first."
-        )
+    try:
 
-        return
-
-    if not policies:
-
-        st.warning(
-            "Please create a policy first."
-        )
-
-        return
-
-    customer_options = {
-        f"{c['name']} - ID {c['id']}": c["id"]
-        for c in customers
-    }
-
-    policy_options = {
-        f"{p['policy_number']} - {p['policy_name']}":
-        p["id"]
-        for p in policies
-    }
-
-    tab1, tab2 = st.tabs([
-        "➕ Submit Claim",
-        "📋 Claim Records"
-    ])
-
-    with tab1:
-
-        with st.form("claim_form"):
-
-            claim_number = st.text_input(
-                "Claim Number *",
-                placeholder="CLM-1001"
+        cursor.execute("""
+            INSERT INTO customers
+            (
+                name,
+                email,
+                phone,
+                address,
+                dob,
+                gender,
+                created_at
             )
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            name,
+            email,
+            phone,
+            address,
+            dob,
+            gender,
+            datetime.now()
+        ))
 
-            customer = st.selectbox(
-                "Customer",
-                list(customer_options.keys())
-            )
+        connection.commit()
 
-            policy = st.selectbox(
-                "Policy",
-                list(policy_options.keys())
-            )
+        return True
 
-            claim_amount = st.number_input(
-                "Claim Amount",
-                min_value=0.0,
-                step=1000.0
-            )
+    except Error as e:
 
-            claim_date = st.date_input(
-                "Claim Date"
-            )
+        print("Add Customer Error:", e)
 
-            description = st.text_area(
-                "Claim Description"
-            )
+        return False
 
-            submit = st.form_submit_button(
-                "Submit Claim",
-                type="primary"
-            )
+    finally:
 
-            if submit:
-
-                result = database.add_claim(
-                    claim_number,
-                    customer_options[customer],
-                    policy_options[policy],
-                    claim_amount,
-                    str(claim_date),
-                    description
-                )
-
-                if result:
-
-                    st.success(
-                        "Claim submitted successfully!"
-                    )
-
-                    st.rerun()
-
-                else:
-
-                    st.error(
-                        "Claim number already exists."
-                    )
-
-    with tab2:
-
-        claims = database.get_claims()
-
-        if claims:
-
-            for claim in claims:
-
-                with st.expander(
-                    f"{claim['claim_number']} | "
-                    f"{claim['customer_name']} | "
-                    f"₹{claim['claim_amount']:,.2f}"
-                ):
-
-                    st.write(
-                        f"**Policy:** "
-                        f"{claim['policy_number']}"
-                    )
-
-                    st.write(
-                        f"**Description:** "
-                        f"{claim['description']}"
-                    )
-
-                    st.write(
-                        f"**Date:** "
-                        f"{claim['claim_date']}"
-                    )
-
-                    status = st.selectbox(
-                        "Claim Status",
-                        [
-                            "Pending",
-                            "Approved",
-                            "Rejected",
-                            "Under Review"
-                        ],
-                        index=[
-                            "Pending",
-                            "Approved",
-                            "Rejected",
-                            "Under Review"
-                        ].index(claim["status"]),
-                        key=f"status_{claim['id']}"
-                    )
-
-                    if st.button(
-                        "Update Status",
-                        key=f"update_{claim['id']}"
-                    ):
-
-                        database.update_claim_status(
-                            claim["id"],
-                            status
-                        )
-
-                        st.success(
-                            "Claim status updated."
-                        )
-
-                        st.rerun()
-
-        else:
-
-            st.info(
-                "No claims found."
-            )
+        cursor.close()
+        connection.close()
 
 
-# =========================================================
-# PAYMENTS
-# =========================================================
+def get_customers():
 
-def payments_page():
+    connection = get_connection()
 
-    st.markdown('<div class="page-title-premium">💳 Premium Payments</div><div class="page-sub-premium">Record premium payments and monitor transaction history.</div>', unsafe_allow_html=True)
+    if connection is None:
+        return []
 
-    customers = database.get_customers()
-    policies = database.get_policies()
+    cursor = connection.cursor(dictionary=True)
 
-    if not customers or not policies:
+    try:
 
-        st.warning(
-            "Please create customers and policies first."
-        )
+        cursor.execute("""
+            SELECT *
+            FROM customers
+            ORDER BY id DESC
+        """)
 
-        return
+        return cursor.fetchall()
 
-    customer_options = {
-        f"{c['name']} - ID {c['id']}": c["id"]
-        for c in customers
-    }
+    except Error as e:
 
-    policy_options = {
-        f"{p['policy_number']} - {p['policy_name']}":
-        p["id"]
-        for p in policies
-    }
+        print("Get Customers Error:", e)
 
-    tab1, tab2 = st.tabs([
-        "➕ Record Payment",
-        "📋 Payment History"
-    ])
+        return []
 
-    with tab1:
+    finally:
 
-        with st.form("payment_form"):
+        cursor.close()
+        connection.close()
 
-            payment_number = st.text_input(
-                "Payment Number *",
-                placeholder="PAY-1001"
-            )
 
-            customer = st.selectbox(
-                "Customer",
-                list(customer_options.keys())
-            )
+def update_customer(
+    customer_id,
+    name,
+    email,
+    phone,
+    address,
+    dob,
+    gender
+):
 
-            policy = st.selectbox(
-                "Policy",
-                list(policy_options.keys())
-            )
+    connection = get_connection()
 
-            amount = st.number_input(
-                "Payment Amount",
-                min_value=0.0,
-                step=500.0
-            )
+    if connection is None:
+        return False
 
-            payment_date = st.date_input(
-                "Payment Date"
-            )
+    cursor = connection.cursor()
 
-            payment_method = st.selectbox(
-                "Payment Method",
-                [
-                    "Cash",
-                    "UPI",
-                    "Credit Card",
-                    "Debit Card",
-                    "Net Banking"
-                ]
-            )
+    try:
 
-            submit = st.form_submit_button(
-                "Record Payment",
-                type="primary"
-            )
+        cursor.execute("""
+            UPDATE customers
+            SET
+                name = %s,
+                email = %s,
+                phone = %s,
+                address = %s,
+                dob = %s,
+                gender = %s
+            WHERE id = %s
+        """, (
+            name,
+            email,
+            phone,
+            address,
+            dob,
+            gender,
+            customer_id
+        ))
 
-            if submit:
+        connection.commit()
 
-                result = database.add_payment(
-                    payment_number,
-                    customer_options[customer],
-                    policy_options[policy],
-                    amount,
-                    str(payment_date),
-                    payment_method
-                )
+        return True
 
-                if result:
+    except Error as e:
 
-                    st.success(
-                        "Payment recorded successfully!"
-                    )
+        print("Update Customer Error:", e)
 
-                    st.rerun()
+        return False
 
-                else:
+    finally:
 
-                    st.error(
-                        "Payment number already exists."
-                    )
+        cursor.close()
+        connection.close()
 
-    with tab2:
 
-        payments = database.get_payments()
+def delete_customer(customer_id):
 
-        if payments:
+    connection = get_connection()
 
-            df = pd.DataFrame(payments)
+    if connection is None:
+        return False
 
-            st.dataframe(
-                df,
-                use_container_width=True,
-                hide_index=True
-            )
+    cursor = connection.cursor()
 
-        else:
+    try:
 
-            st.info(
-                "No payment records found."
-            )
+        cursor.execute("""
+            DELETE FROM customers
+            WHERE id = %s
+        """, (customer_id,))
+
+        connection.commit()
+
+        return True
+
+    except Error as e:
+
+        print("Delete Customer Error:", e)
+
+        return False
+
+    finally:
+
+        cursor.close()
+        connection.close()
 
 
 # =========================================================
-# REPORTS
+# POLICY MANAGEMENT
 # =========================================================
 
-def reports_page():
+def add_policy(
+    policy_number,
+    customer_id,
+    policy_name,
+    category,
+    premium,
+    coverage_amount,
+    start_date,
+    end_date,
+    status
+):
 
-    st.markdown('<div class="page-title-premium">📈 Reports & Analytics</div><div class="page-sub-premium">Explore live insurance performance and export reports.</div>', unsafe_allow_html=True)
+    connection = get_connection()
 
-    stats = database.get_dashboard_stats()
+    if connection is None:
+        return False
 
-    col1, col2, col3 = st.columns(3)
+    cursor = connection.cursor()
 
-    with col1:
+    try:
 
-        st.metric(
-            "Customers",
-            stats["customers"]
-        )
+        cursor.execute("""
+            INSERT INTO policies
+            (
+                policy_number,
+                customer_id,
+                policy_name,
+                category,
+                premium,
+                coverage_amount,
+                start_date,
+                end_date,
+                status
+            )
+            VALUES
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (
+            policy_number,
+            customer_id,
+            policy_name,
+            category,
+            premium,
+            coverage_amount,
+            start_date,
+            end_date,
+            status
+        ))
 
-    with col2:
+        connection.commit()
 
-        st.metric(
-            "Policies",
-            stats["policies"]
-        )
+        return True
 
-    with col3:
+    except Error as e:
 
-        st.metric(
-            "Revenue",
-            f"₹{stats['revenue']:,.2f}"
-        )
+        print("Add Policy Error:", e)
 
-    st.divider()
+        return False
 
-    policies = database.get_policies()
+    finally:
 
-    if policies:
+        cursor.close()
+        connection.close()
 
-        st.subheader(
-            "Insurance Policy Report"
-        )
 
-        df = pd.DataFrame(policies)
+def get_policies():
 
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=True
-        )
+    connection = get_connection()
 
-        csv = df.to_csv(
-            index=False
-        ).encode("utf-8")
+    if connection is None:
+        return []
 
-        st.download_button(
-            "⬇️ Download Policy Report",
-            csv,
-            "policy_report.csv",
-            "text/csv"
-        )
+    cursor = connection.cursor(dictionary=True)
 
-    st.divider()
+    try:
 
-    claims = database.get_claims()
+        cursor.execute("""
+            SELECT
+                policies.*,
+                customers.name AS customer_name
 
-    if claims:
+            FROM policies
 
-        st.subheader(
-            "Claims Report"
-        )
+            LEFT JOIN customers
+                ON policies.customer_id = customers.id
 
-        df_claims = pd.DataFrame(claims)
+            ORDER BY policies.id DESC
+        """)
 
-        st.dataframe(
-            df_claims,
-            use_container_width=True,
-            hide_index=True
-        )
+        return cursor.fetchall()
 
-        csv = df_claims.to_csv(
-            index=False
-        ).encode("utf-8")
+    except Error as e:
 
-        st.download_button(
-            "⬇️ Download Claims Report",
-            csv,
-            "claims_report.csv",
-            "text/csv"
-        )
+        print("Get Policies Error:", e)
 
+        return []
 
-# =========================================================
-# PROFILE
-# =========================================================
+    finally:
 
-def profile_page():
+        cursor.close()
+        connection.close()
 
-    st.markdown('<div class="page-title-premium">👤 My Profile</div><div class="page-sub-premium">Account and secure access information.</div>', unsafe_allow_html=True)
 
-    user = st.session_state.user
+def update_policy_status(
+    policy_id,
+    status
+):
 
-    col1, col2 = st.columns(2)
+    connection = get_connection()
 
-    with col1:
+    if connection is None:
+        return False
 
-        st.subheader(
-            "Account Information"
-        )
+    cursor = connection.cursor()
 
-        st.write(
-            f"**Name:** {user['full_name']}"
-        )
+    try:
 
-        st.write(
-            f"**Username:** {user['username']}"
-        )
+        cursor.execute("""
+            UPDATE policies
+            SET status = %s
+            WHERE id = %s
+        """, (
+            status,
+            policy_id
+        ))
 
-        st.write(
-            f"**Role:** {user['role']}"
-        )
+        connection.commit()
 
-        st.write(
-            f"**Email:** {user['email']}"
-        )
+        return True
 
-    with col2:
+    except Error as e:
 
-        st.info(
-            "Your account is protected by "
-            "role-based authentication."
-        )
+        print("Update Policy Error:", e)
 
+        return False
 
-# =========================================================
-# MAIN APPLICATION
-# =========================================================
+    finally:
 
-def main_app():
-
-    user = st.session_state.user
-
-    # SIDEBAR
-
-    with st.sidebar:
-
-        st.markdown("""
-        <div class="brand-premium">
-            <div class="brand-shield">🛡️</div>
-            <div class="brand-title">SMART INSURANCE</div>
-            <div class="brand-sub">MANAGEMENT SYSTEM</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown(
-            f"### 👤 {user['full_name']}"
-        )
-
-        st.caption(
-            f"Role: {user['role']}"
-        )
-
-        st.divider()
-
-        menu = st.radio(
-            "Navigation",
-            [
-                "📊 Dashboard",
-                "👥 Customers",
-                "📋 Policies",
-                "👨‍💼 Agents",
-                "📑 Claims",
-                "💳 Payments",
-                "📈 Reports",
-                "👤 Profile"
-            ]
-        )
-
-        st.divider()
-
-        if st.button(
-            "🚪 Logout",
-            use_container_width=True
-        ):
-
-            st.session_state.logged_in = False
-            st.session_state.user = None
-
-            st.rerun()
-
-    # PAGE ROUTING
-
-    if menu == "📊 Dashboard":
-
-        dashboard()
-
-    elif menu == "👥 Customers":
-
-        customers_page()
-
-    elif menu == "📋 Policies":
-
-        policies_page()
-
-    elif menu == "👨‍💼 Agents":
-
-        agents_page()
-
-    elif menu == "📑 Claims":
-
-        claims_page()
-
-    elif menu == "💳 Payments":
-
-        payments_page()
-
-    elif menu == "📈 Reports":
-
-        reports_page()
-
-    elif menu == "👤 Profile":
-
-        profile_page()
+        cursor.close()
+        connection.close()
 
 
 # =========================================================
-# RUN APPLICATION
+# AGENT MANAGEMENT
 # =========================================================
 
-if not st.session_state.logged_in:
+def add_agent(
+    name,
+    email,
+    phone,
+    specialization,
+    commission,
+    status
+):
 
-    login_page()
+    connection = get_connection()
 
-else:
+    if connection is None:
+        return False
 
-    main_app()
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO agents
+            (
+                name,
+                email,
+                phone,
+                specialization,
+                commission,
+                status,
+                created_at
+            )
+            VALUES
+            (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            name,
+            email,
+            phone,
+            specialization,
+            commission,
+            status,
+            datetime.now()
+        ))
+
+        connection.commit()
+
+        return True
+
+    except Error as e:
+
+        print("Add Agent Error:", e)
+
+        return False
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+def get_agents():
+
+    connection = get_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        cursor.execute("""
+            SELECT *
+            FROM agents
+            ORDER BY id DESC
+        """)
+
+        return cursor.fetchall()
+
+    except Error as e:
+
+        print("Get Agents Error:", e)
+
+        return []
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# CLAIM MANAGEMENT
+# =========================================================
+
+def add_claim(
+    claim_number,
+    customer_id,
+    policy_id,
+    claim_amount,
+    claim_date,
+    description
+):
+
+    connection = get_connection()
+
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO claims
+            (
+                claim_number,
+                customer_id,
+                policy_id,
+                claim_amount,
+                claim_date,
+                description,
+                status
+            )
+            VALUES
+            (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            claim_number,
+            customer_id,
+            policy_id,
+            claim_amount,
+            claim_date,
+            description,
+            "Pending"
+        ))
+
+        connection.commit()
+
+        return True
+
+    except Error as e:
+
+        print("Add Claim Error:", e)
+
+        return False
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+def get_claims():
+
+    connection = get_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        cursor.execute("""
+            SELECT
+                claims.*,
+                customers.name AS customer_name,
+                policies.policy_number,
+                policies.policy_name
+
+            FROM claims
+
+            LEFT JOIN customers
+                ON claims.customer_id = customers.id
+
+            LEFT JOIN policies
+                ON claims.policy_id = policies.id
+
+            ORDER BY claims.id DESC
+        """)
+
+        return cursor.fetchall()
+
+    except Error as e:
+
+        print("Get Claims Error:", e)
+
+        return []
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+def update_claim_status(
+    claim_id,
+    status
+):
+
+    connection = get_connection()
+
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            UPDATE claims
+            SET status = %s
+            WHERE id = %s
+        """, (
+            status,
+            claim_id
+        ))
+
+        connection.commit()
+
+        return True
+
+    except Error as e:
+
+        print("Update Claim Error:", e)
+
+        return False
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# PAYMENT MANAGEMENT
+# =========================================================
+
+def add_payment(
+    payment_number,
+    customer_id,
+    policy_id,
+    amount,
+    payment_date,
+    payment_method
+):
+
+    connection = get_connection()
+
+    if connection is None:
+        return False
+
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute("""
+            INSERT INTO payments
+            (
+                payment_number,
+                customer_id,
+                policy_id,
+                amount,
+                payment_date,
+                payment_method,
+                status
+            )
+            VALUES
+            (%s, %s, %s, %s, %s, %s, %s)
+        """, (
+            payment_number,
+            customer_id,
+            policy_id,
+            amount,
+            payment_date,
+            payment_method,
+            "Paid"
+        ))
+
+        connection.commit()
+
+        return True
+
+    except Error as e:
+
+        print("Add Payment Error:", e)
+
+        return False
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+def get_payments():
+
+    connection = get_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        cursor.execute("""
+            SELECT
+                payments.*,
+                customers.name AS customer_name,
+                policies.policy_number,
+                policies.policy_name
+
+            FROM payments
+
+            LEFT JOIN customers
+                ON payments.customer_id = customers.id
+
+            LEFT JOIN policies
+                ON payments.policy_id = policies.id
+
+            ORDER BY payments.id DESC
+        """)
+
+        return cursor.fetchall()
+
+    except Error as e:
+
+        print("Get Payments Error:", e)
+
+        return []
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# DASHBOARD STATISTICS
+# =========================================================
+
+def get_dashboard_stats():
+
+    connection = get_connection()
+
+    if connection is None:
+
+        return {
+            "customers": 0,
+            "policies": 0,
+            "claims": 0,
+            "pending_claims": 0,
+            "agents": 0,
+            "revenue": 0
+        }
+
+    cursor = connection.cursor()
+
+    try:
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM customers"
+        )
+
+        customers = cursor.fetchone()[0]
+
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM policies"
+        )
+
+        policies = cursor.fetchone()[0]
+
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM claims"
+        )
+
+        claims = cursor.fetchone()[0]
+
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM claims
+            WHERE status = 'Pending'
+        """)
+
+        pending_claims = cursor.fetchone()[0]
+
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM agents"
+        )
+
+        agents = cursor.fetchone()[0]
+
+
+        cursor.execute("""
+            SELECT COALESCE(SUM(amount), 0)
+            FROM payments
+            WHERE status = 'Paid'
+        """)
+
+        revenue = cursor.fetchone()[0]
+
+
+        return {
+            "customers": customers,
+            "policies": policies,
+            "claims": claims,
+            "pending_claims": pending_claims,
+            "agents": agents,
+            "revenue": float(revenue or 0)
+        }
+
+    except Error as e:
+
+        print("Dashboard Error:", e)
+
+        return {
+            "customers": 0,
+            "policies": 0,
+            "claims": 0,
+            "pending_claims": 0,
+            "agents": 0,
+            "revenue": 0
+        }
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# POLICY CATEGORY REPORT
+# =========================================================
+
+def get_policy_categories():
+
+    connection = get_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        cursor.execute("""
+            SELECT
+                category,
+                COUNT(*) AS total
+
+            FROM policies
+
+            GROUP BY category
+        """)
+
+        return cursor.fetchall()
+
+    except Error as e:
+
+        print("Policy Category Error:", e)
+
+        return []
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# CLAIM STATUS REPORT
+# =========================================================
+
+def get_claim_status():
+
+    connection = get_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        cursor.execute("""
+            SELECT
+                status,
+                COUNT(*) AS total
+
+            FROM claims
+
+            GROUP BY status
+        """)
+
+        return cursor.fetchall()
+
+    except Error as e:
+
+        print("Claim Status Error:", e)
+
+        return []
+
+    finally:
+
+        cursor.close()
+        connection.close()
+
+
+# =========================================================
+# MONTHLY REVENUE
+# =========================================================
+
+def get_monthly_revenue():
+
+    connection = get_connection()
+
+    if connection is None:
+        return []
+
+    cursor = connection.cursor(dictionary=True)
+
+    try:
+
+        cursor.execute("""
+            SELECT
+                DATE_FORMAT(payment_date, '%Y-%m') AS month,
+                SUM(amount) AS revenue
+
+            FROM payments
+
+            WHERE status = 'Paid'
+
+            GROUP BY DATE_FORMAT(payment_date, '%Y-%m')
+
+            ORDER BY month
+        """)
+
+        return cursor.fetchall()
+
+    except Error as e:
+
+        print("Revenue Error:", e)
+
+        return []
+
+    finally:
+
+        cursor.close()
+        connection.close()
