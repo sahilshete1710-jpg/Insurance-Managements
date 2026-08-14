@@ -1,164 +1,314 @@
-import sqlite3
+import sqlite3.connect(...)
+import mysql.connector
+from mysql.connector import Error
 from datetime import datetime
 import hashlib
 
-DB_NAME = "insurance.db"
+
+# =========================================================
+# MYSQL CONFIGURATION
+# =========================================================
+
+DB_CONFIG = {
+    "host": "localhost",
+    "user": "root",
+    "password": "root123",
+    "database": "insurance_management"
+}
 
 
-# ---------------------------------------------------------
+# =========================================================
 # DATABASE CONNECTION
-# ---------------------------------------------------------
+# =========================================================
 
 def get_connection():
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    return conn
+
+    try:
+        connection = mysql.connector.connect(
+            host=DB_CONFIG["host"],
+            user=DB_CONFIG["user"],
+            password=DB_CONFIG["password"],
+            database=DB_CONFIG["database"]
+        )
+
+        return connection
+
+    except Error as e:
+
+        print("MySQL Connection Error:", e)
+
+        return None
 
 
-# ---------------------------------------------------------
+# =========================================================
 # PASSWORD HASHING
-# ---------------------------------------------------------
+# =========================================================
 
 def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+
+    return hashlib.sha256(
+        password.encode()
+    ).hexdigest()
 
 
-# ---------------------------------------------------------
+# =========================================================
 # INITIALIZE DATABASE
-# ---------------------------------------------------------
+# =========================================================
 
 def init_db():
 
     conn = get_connection()
+
+    if conn is None:
+        return
+
     cursor = conn.cursor()
 
-    # USERS TABLE
+    # -----------------------------------------------------
+    # USERS
+    # -----------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            full_name TEXT NOT NULL,
-            role TEXT NOT NULL,
-            email TEXT,
-            created_at TEXT
+
+            id INT AUTO_INCREMENT PRIMARY KEY,
+
+            username VARCHAR(100) UNIQUE NOT NULL,
+
+            password VARCHAR(255) NOT NULL,
+
+            full_name VARCHAR(150) NOT NULL,
+
+            role VARCHAR(50) NOT NULL,
+
+            email VARCHAR(150),
+
+            created_at DATETIME
+
         )
     """)
 
-    # CUSTOMERS TABLE
+
+    # -----------------------------------------------------
+    # CUSTOMERS
+    # -----------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS customers (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT,
-            phone TEXT,
+
+            id INT AUTO_INCREMENT PRIMARY KEY,
+
+            name VARCHAR(150) NOT NULL,
+
+            email VARCHAR(150),
+
+            phone VARCHAR(30),
+
             address TEXT,
-            dob TEXT,
-            gender TEXT,
-            created_at TEXT
+
+            dob DATE,
+
+            gender VARCHAR(30),
+
+            created_at DATETIME
+
         )
     """)
 
-    # POLICIES TABLE
+
+    # -----------------------------------------------------
+    # POLICIES
+    # -----------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS policies (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            policy_number TEXT UNIQUE NOT NULL,
-            customer_id INTEGER,
-            policy_name TEXT NOT NULL,
-            category TEXT NOT NULL,
-            premium REAL DEFAULT 0,
-            coverage_amount REAL DEFAULT 0,
-            start_date TEXT,
-            end_date TEXT,
-            status TEXT DEFAULT 'Active',
-            FOREIGN KEY(customer_id) REFERENCES customers(id)
+
+            id INT AUTO_INCREMENT PRIMARY KEY,
+
+            policy_number VARCHAR(100) UNIQUE NOT NULL,
+
+            customer_id INT,
+
+            policy_name VARCHAR(150) NOT NULL,
+
+            category VARCHAR(100) NOT NULL,
+
+            premium DECIMAL(15,2) DEFAULT 0,
+
+            coverage_amount DECIMAL(15,2) DEFAULT 0,
+
+            start_date DATE,
+
+            end_date DATE,
+
+            status VARCHAR(50) DEFAULT 'Active',
+
+            FOREIGN KEY (customer_id)
+                REFERENCES customers(id)
+                ON DELETE SET NULL
+
         )
     """)
 
-    # AGENTS TABLE
+
+    # -----------------------------------------------------
+    # AGENTS
+    # -----------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS agents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT,
-            phone TEXT,
-            specialization TEXT,
-            commission REAL DEFAULT 0,
-            status TEXT DEFAULT 'Active',
-            created_at TEXT
+
+            id INT AUTO_INCREMENT PRIMARY KEY,
+
+            name VARCHAR(150) NOT NULL,
+
+            email VARCHAR(150),
+
+            phone VARCHAR(30),
+
+            specialization VARCHAR(100),
+
+            commission DECIMAL(10,2) DEFAULT 0,
+
+            status VARCHAR(50) DEFAULT 'Active',
+
+            created_at DATETIME
+
         )
     """)
 
-    # CLAIMS TABLE
+
+    # -----------------------------------------------------
+    # CLAIMS
+    # -----------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS claims (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            claim_number TEXT UNIQUE NOT NULL,
-            customer_id INTEGER,
-            policy_id INTEGER,
-            claim_amount REAL DEFAULT 0,
-            claim_date TEXT,
+
+            id INT AUTO_INCREMENT PRIMARY KEY,
+
+            claim_number VARCHAR(100) UNIQUE NOT NULL,
+
+            customer_id INT,
+
+            policy_id INT,
+
+            claim_amount DECIMAL(15,2) DEFAULT 0,
+
+            claim_date DATE,
+
             description TEXT,
-            status TEXT DEFAULT 'Pending',
-            FOREIGN KEY(customer_id) REFERENCES customers(id),
-            FOREIGN KEY(policy_id) REFERENCES policies(id)
+
+            status VARCHAR(50) DEFAULT 'Pending',
+
+            FOREIGN KEY (customer_id)
+                REFERENCES customers(id)
+                ON DELETE SET NULL,
+
+            FOREIGN KEY (policy_id)
+                REFERENCES policies(id)
+                ON DELETE SET NULL
+
         )
     """)
 
-    # PAYMENTS TABLE
+
+    # -----------------------------------------------------
+    # PAYMENTS
+    # -----------------------------------------------------
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS payments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            payment_number TEXT UNIQUE NOT NULL,
-            customer_id INTEGER,
-            policy_id INTEGER,
-            amount REAL DEFAULT 0,
-            payment_date TEXT,
-            payment_method TEXT,
-            status TEXT DEFAULT 'Paid',
-            FOREIGN KEY(customer_id) REFERENCES customers(id),
-            FOREIGN KEY(policy_id) REFERENCES policies(id)
+
+            id INT AUTO_INCREMENT PRIMARY KEY,
+
+            payment_number VARCHAR(100) UNIQUE NOT NULL,
+
+            customer_id INT,
+
+            policy_id INT,
+
+            amount DECIMAL(15,2) DEFAULT 0,
+
+            payment_date DATE,
+
+            payment_method VARCHAR(50),
+
+            status VARCHAR(50) DEFAULT 'Paid',
+
+            FOREIGN KEY (customer_id)
+                REFERENCES customers(id)
+                ON DELETE SET NULL,
+
+            FOREIGN KEY (policy_id)
+                REFERENCES policies(id)
+                ON DELETE SET NULL
+
         )
     """)
 
-    # DEFAULT ADMIN
-    cursor.execute(
-        "SELECT * FROM users WHERE username = ?",
-        ("admin",)
-    )
 
-    if cursor.fetchone() is None:
+    # -----------------------------------------------------
+    # DEFAULT ADMIN
+    # -----------------------------------------------------
+
+    cursor.execute("""
+        SELECT id
+        FROM users
+        WHERE username = %s
+    """, ("admin",))
+
+    admin = cursor.fetchone()
+
+    if admin is None:
 
         cursor.execute("""
             INSERT INTO users
-            (username, password, full_name, role, email, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (
+                username,
+                password,
+                full_name,
+                role,
+                email,
+                created_at
+            )
+
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (
             "admin",
             hash_password("admin123"),
             "System Administrator",
             "Admin",
             "admin@insurance.com",
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            datetime.now()
         ))
 
+
     conn.commit()
+
+    cursor.close()
     conn.close()
 
 
-# ---------------------------------------------------------
+# =========================================================
 # LOGIN
-# ---------------------------------------------------------
+# =========================================================
 
 def authenticate_user(username, password):
 
     conn = get_connection()
-    cursor = conn.cursor()
+
+    if conn is None:
+        return None
+
+    cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT * FROM users
-        WHERE username = ? AND password = ?
+        SELECT *
+        FROM users
+
+        WHERE username = %s
+        AND password = %s
     """, (
         username,
         hash_password(password)
@@ -166,61 +316,98 @@ def authenticate_user(username, password):
 
     user = cursor.fetchone()
 
+    cursor.close()
     conn.close()
 
-    if user:
-        return dict(user)
-
-    return None
+    return user
 
 
-# ---------------------------------------------------------
-# USERS
-# ---------------------------------------------------------
+# =========================================================
+# ADD USER
+# =========================================================
 
-def add_user(username, password, full_name, role, email):
+def add_user(
+    username,
+    password,
+    full_name,
+    role,
+    email
+):
 
     conn = get_connection()
+
+    if conn is None:
+        return False
+
     cursor = conn.cursor()
 
     try:
 
         cursor.execute("""
             INSERT INTO users
-            (username, password, full_name, role, email, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            (
+                username,
+                password,
+                full_name,
+                role,
+                email,
+                created_at
+            )
+
+            VALUES (%s, %s, %s, %s, %s, %s)
         """, (
             username,
             hash_password(password),
             full_name,
             role,
             email,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            datetime.now()
         ))
 
         conn.commit()
+
         return True
 
-    except sqlite3.IntegrityError:
+    except Error:
+
         return False
 
     finally:
+
+        cursor.close()
         conn.close()
 
 
-# ---------------------------------------------------------
+# =========================================================
 # CUSTOMERS
-# ---------------------------------------------------------
+# =========================================================
 
-def add_customer(name, email, phone, address, dob, gender):
+def add_customer(
+    name,
+    email,
+    phone,
+    address,
+    dob,
+    gender
+):
 
     conn = get_connection()
+
     cursor = conn.cursor()
 
     cursor.execute("""
         INSERT INTO customers
-        (name, email, phone, address, dob, gender, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        (
+            name,
+            email,
+            phone,
+            address,
+            dob,
+            gender,
+            created_at
+        )
+
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """, (
         name,
         email,
@@ -228,10 +415,12 @@ def add_customer(name, email, phone, address, dob, gender):
         address,
         dob,
         gender,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        datetime.now()
     ))
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
 
@@ -239,32 +428,42 @@ def get_customers():
 
     conn = get_connection()
 
-    data = conn.execute("""
-        SELECT * FROM customers
-        ORDER BY id DESC
-    """).fetchall()
+    cursor = conn.cursor(dictionary=True)
 
+    cursor.execute("""
+        SELECT *
+        FROM customers
+        ORDER BY id DESC
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
-    return [dict(row) for row in data]
+    return data
 
 
 def delete_customer(customer_id):
 
     conn = get_connection()
 
-    conn.execute(
-        "DELETE FROM customers WHERE id = ?",
-        (customer_id,)
-    )
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        DELETE FROM customers
+        WHERE id = %s
+    """, (customer_id,))
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
 
-# ---------------------------------------------------------
+# =========================================================
 # POLICIES
-# ---------------------------------------------------------
+# =========================================================
 
 def add_policy(
     policy_number,
@@ -280,9 +479,11 @@ def add_policy(
 
     conn = get_connection()
 
+    cursor = conn.cursor()
+
     try:
 
-        conn.execute("""
+        cursor.execute("""
             INSERT INTO policies
             (
                 policy_number,
@@ -295,7 +496,9 @@ def add_policy(
                 end_date,
                 status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+
+            VALUES
+            (%s,%s,%s,%s,%s,%s,%s,%s,%s)
         """, (
             policy_number,
             customer_id,
@@ -309,12 +512,16 @@ def add_policy(
         ))
 
         conn.commit()
+
         return True
 
-    except sqlite3.IntegrityError:
+    except Error:
+
         return False
 
     finally:
+
+        cursor.close()
         conn.close()
 
 
@@ -322,24 +529,34 @@ def get_policies():
 
     conn = get_connection()
 
-    data = conn.execute("""
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
         SELECT
+
             policies.*,
+
             customers.name AS customer_name
+
         FROM policies
+
         LEFT JOIN customers
         ON policies.customer_id = customers.id
-        ORDER BY policies.id DESC
-    """).fetchall()
 
+        ORDER BY policies.id DESC
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
-    return [dict(row) for row in data]
+    return data
 
 
-# ---------------------------------------------------------
+# =========================================================
 # AGENTS
-# ---------------------------------------------------------
+# =========================================================
 
 def add_agent(
     name,
@@ -352,7 +569,9 @@ def add_agent(
 
     conn = get_connection()
 
-    conn.execute("""
+    cursor = conn.cursor()
+
+    cursor.execute("""
         INSERT INTO agents
         (
             name,
@@ -363,7 +582,9 @@ def add_agent(
             status,
             created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s)
     """, (
         name,
         email,
@@ -371,10 +592,12 @@ def add_agent(
         specialization,
         commission,
         status,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        datetime.now()
     ))
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
 
@@ -382,19 +605,25 @@ def get_agents():
 
     conn = get_connection()
 
-    data = conn.execute("""
-        SELECT * FROM agents
-        ORDER BY id DESC
-    """).fetchall()
+    cursor = conn.cursor(dictionary=True)
 
+    cursor.execute("""
+        SELECT *
+        FROM agents
+        ORDER BY id DESC
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
-    return [dict(row) for row in data]
+    return data
 
 
-# ---------------------------------------------------------
+# =========================================================
 # CLAIMS
-# ---------------------------------------------------------
+# =========================================================
 
 def add_claim(
     claim_number,
@@ -407,9 +636,11 @@ def add_claim(
 
     conn = get_connection()
 
+    cursor = conn.cursor()
+
     try:
 
-        conn.execute("""
+        cursor.execute("""
             INSERT INTO claims
             (
                 claim_number,
@@ -420,7 +651,9 @@ def add_claim(
                 description,
                 status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+
+            VALUES
+            (%s,%s,%s,%s,%s,%s,%s)
         """, (
             claim_number,
             customer_id,
@@ -432,12 +665,16 @@ def add_claim(
         ))
 
         conn.commit()
+
         return True
 
-    except sqlite3.IntegrityError:
+    except Error:
+
         return False
 
     finally:
+
+        cursor.close()
         conn.close()
 
 
@@ -445,44 +682,65 @@ def get_claims():
 
     conn = get_connection()
 
-    data = conn.execute("""
-        SELECT
-            claims.*,
-            customers.name AS customer_name,
-            policies.policy_number
-        FROM claims
-        LEFT JOIN customers
-            ON claims.customer_id = customers.id
-        LEFT JOIN policies
-            ON claims.policy_id = policies.id
-        ORDER BY claims.id DESC
-    """).fetchall()
+    cursor = conn.cursor(dictionary=True)
 
+    cursor.execute("""
+        SELECT
+
+            claims.*,
+
+            customers.name AS customer_name,
+
+            policies.policy_number
+
+        FROM claims
+
+        LEFT JOIN customers
+        ON claims.customer_id = customers.id
+
+        LEFT JOIN policies
+        ON claims.policy_id = policies.id
+
+        ORDER BY claims.id DESC
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
-    return [dict(row) for row in data]
+    return data
 
 
-def update_claim_status(claim_id, status):
+def update_claim_status(
+    claim_id,
+    status
+):
 
     conn = get_connection()
 
-    conn.execute("""
+    cursor = conn.cursor()
+
+    cursor.execute("""
         UPDATE claims
-        SET status = ?
-        WHERE id = ?
+
+        SET status = %s
+
+        WHERE id = %s
     """, (
         status,
         claim_id
     ))
 
     conn.commit()
+
+    cursor.close()
     conn.close()
 
 
-# ---------------------------------------------------------
+# =========================================================
 # PAYMENTS
-# ---------------------------------------------------------
+# =========================================================
 
 def add_payment(
     payment_number,
@@ -495,9 +753,11 @@ def add_payment(
 
     conn = get_connection()
 
+    cursor = conn.cursor()
+
     try:
 
-        conn.execute("""
+        cursor.execute("""
             INSERT INTO payments
             (
                 payment_number,
@@ -508,7 +768,9 @@ def add_payment(
                 payment_method,
                 status
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+
+            VALUES
+            (%s,%s,%s,%s,%s,%s,%s)
         """, (
             payment_number,
             customer_id,
@@ -520,12 +782,16 @@ def add_payment(
         ))
 
         conn.commit()
+
         return True
 
-    except sqlite3.IntegrityError:
+    except Error:
+
         return False
 
     finally:
+
+        cursor.close()
         conn.close()
 
 
@@ -533,127 +799,172 @@ def get_payments():
 
     conn = get_connection()
 
-    data = conn.execute("""
-        SELECT
-            payments.*,
-            customers.name AS customer_name,
-            policies.policy_number
-        FROM payments
-        LEFT JOIN customers
-            ON payments.customer_id = customers.id
-        LEFT JOIN policies
-            ON payments.policy_id = policies.id
-        ORDER BY payments.id DESC
-    """).fetchall()
+    cursor = conn.cursor(dictionary=True)
 
+    cursor.execute("""
+        SELECT
+
+            payments.*,
+
+            customers.name AS customer_name,
+
+            policies.policy_number
+
+        FROM payments
+
+        LEFT JOIN customers
+        ON payments.customer_id = customers.id
+
+        LEFT JOIN policies
+        ON payments.policy_id = policies.id
+
+        ORDER BY payments.id DESC
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
-    return [dict(row) for row in data]
+    return data
 
 
-# ---------------------------------------------------------
+# =========================================================
 # DASHBOARD STATISTICS
-# ---------------------------------------------------------
+# =========================================================
 
 def get_dashboard_stats():
 
     conn = get_connection()
 
-    customers = conn.execute(
+    cursor = conn.cursor()
+
+    cursor.execute(
         "SELECT COUNT(*) FROM customers"
-    ).fetchone()[0]
+    )
 
-    policies = conn.execute(
+    customers = cursor.fetchone()[0]
+
+
+    cursor.execute(
         "SELECT COUNT(*) FROM policies"
-    ).fetchone()[0]
+    )
 
-    claims = conn.execute(
+    policies = cursor.fetchone()[0]
+
+
+    cursor.execute(
         "SELECT COUNT(*) FROM claims"
-    ).fetchone()[0]
+    )
 
-    pending_claims = conn.execute("""
+    claims = cursor.fetchone()[0]
+
+
+    cursor.execute("""
         SELECT COUNT(*)
+
         FROM claims
+
         WHERE status = 'Pending'
-    """).fetchone()[0]
+    """)
 
-    agents = conn.execute(
+    pending_claims = cursor.fetchone()[0]
+
+
+    cursor.execute(
         "SELECT COUNT(*) FROM agents"
-    ).fetchone()[0]
+    )
 
-    revenue = conn.execute("""
+    agents = cursor.fetchone()[0]
+
+
+    cursor.execute("""
         SELECT COALESCE(SUM(amount), 0)
-        FROM payments
-        WHERE status = 'Paid'
-    """).fetchone()[0]
 
+        FROM payments
+
+        WHERE status = 'Paid'
+    """)
+
+    revenue = cursor.fetchone()[0]
+
+
+    cursor.close()
     conn.close()
 
+
     return {
+
         "customers": customers,
+
         "policies": policies,
+
         "claims": claims,
+
         "pending_claims": pending_claims,
+
         "agents": agents,
-        "revenue": revenue
+
+        "revenue": float(revenue)
+
     }
 
 
-# ---------------------------------------------------------
+# =========================================================
 # POLICY CATEGORY REPORT
-# ---------------------------------------------------------
+# =========================================================
 
 def get_policy_categories():
 
     conn = get_connection()
 
-    data = conn.execute("""
-        SELECT category, COUNT(*) AS total
-        FROM policies
-        GROUP BY category
-    """).fetchall()
+    cursor = conn.cursor(dictionary=True)
 
+    cursor.execute("""
+        SELECT
+
+            category,
+
+            COUNT(*) AS total
+
+        FROM policies
+
+        GROUP BY category
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
-    return [dict(row) for row in data]
+    return data
 
 
-# ---------------------------------------------------------
+# =========================================================
 # CLAIM STATUS REPORT
-# ---------------------------------------------------------
+# =========================================================
 
 def get_claim_status():
 
     conn = get_connection()
 
-    data = conn.execute("""
-        SELECT status, COUNT(*) AS total
-        FROM claims
-        GROUP BY status
-    """).fetchall()
+    cursor = conn.cursor(dictionary=True)
 
-    conn.close()
-
-    return [dict(row) for row in data]
-
-# ---------------------------------------------------------
-# MONTHLY REVENUE REPORT
-# ---------------------------------------------------------
-
-def get_monthly_revenue():
-
-    conn = get_connection()
-
-    data = conn.execute("""
+    cursor.execute("""
         SELECT
-            substr(payment_date, 1, 7) AS month,
-            COALESCE(SUM(amount), 0) AS revenue
-        FROM payments
-        WHERE status = 'Paid'
-        GROUP BY substr(payment_date, 1, 7)
-        ORDER BY month
-    """).fetchall()
 
+            status,
+
+            COUNT(*) AS total
+
+        FROM claims
+
+        GROUP BY status
+    """)
+
+    data = cursor.fetchall()
+
+    cursor.close()
     conn.close()
 
-    return [dict(row) for row in data]
+    return data
