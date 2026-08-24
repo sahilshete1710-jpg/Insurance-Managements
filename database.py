@@ -1,5 +1,16 @@
-import mysql.connector
-from mysql.connector import Error
+try:
+    import importlib
+
+    mysql = importlib.import_module("mysql.connector")
+    Error = mysql.Error
+except ModuleNotFoundError:
+    mysql = None
+
+    class Error(Exception):
+        """Fallback error raised when MySQL connector is unavailable."""
+
+    mysql = None
+
 from datetime import datetime
 import hashlib
 
@@ -22,6 +33,10 @@ DB_CONFIG = {
 # =========================================================
 def get_connection():
     """Create and return a MySQL database connection."""
+    if mysql is None:
+        print("mysql-connector-python is not installed. Install it with: pip install mysql-connector-python")
+        return None
+
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
 

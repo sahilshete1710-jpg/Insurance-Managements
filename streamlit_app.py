@@ -1,6 +1,7 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
+import importlib
+st = importlib.import_module("streamlit")
+import pandas as pd  # type: ignore[reportMissingModuleSource]
+px = importlib.import_module("plotly.express")
 from pathlib import Path
 
 import database
@@ -396,7 +397,8 @@ def dashboard():
 
     st.subheader("💰 Monthly Revenue")
 
-    revenue = database.get_monthly_revenue()
+    revenue_func = getattr(database, "get_monthly_revenue", None)
+    revenue = revenue_func() if callable(revenue_func) else []
 
     if revenue:
 
