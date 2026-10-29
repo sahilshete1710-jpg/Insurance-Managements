@@ -1,5 +1,2 @@
-streamlit
-mysql-connector-python
-bcrypt
-pandas
-plotly
+Flask>=3.0
+mysql-connector-python>=8.4

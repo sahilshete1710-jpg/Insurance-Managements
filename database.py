@@ -1,8 +1,19 @@
-import mysql.connector
-from mysql.connector import Error
+try:
+    import importlib
+
+    mysql = importlib.import_module("mysql.connector")
+    Error = mysql.Error
+except ModuleNotFoundError:
+    mysql = None
+
+    class Error(Exception):
+        """Fallback error raised when MySQL connector is unavailable."""
+
+    mysql = None
+
 from datetime import datetime
 import hashlib
-import os
+
 
 # =========================================================
 # MYSQL CONFIGURATION
@@ -16,11 +27,16 @@ DB_CONFIG = {
     "database": "insurance_management",
 }
 
+
 # =========================================================
 # DATABASE CONNECTION
 # =========================================================
 def get_connection():
     """Create and return a MySQL database connection."""
+    if mysql is None:
+        print("mysql-connector-python is not installed. Install it with: pip install mysql-connector-python")
+        return None
+
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
 
@@ -29,10 +45,6 @@ def get_connection():
 
     except Error as e:
         print("MySQL Connection Error:", e)
-        print(
-            "Check that MySQL Server is running, the database exists, "
-            "and INSURANCE_DB_USER / INSURANCE_DB_PASSWORD are correct."
-        )
 
     return None
 
@@ -1242,41 +1254,3 @@ if __name__ == "__main__":
     else:
         print("Could not connect to MySQL.")
         print("Check MySQL service, username, password, and database name.")
-
-
-# =========================================================
-# MONTHLY REVENUE REPORT
-# =========================================================
-def get_monthly_revenue():
-    """Return monthly paid-payment revenue for dashboard charts."""
-    conn = get_connection()
-
-    if conn is None:
-        return []
-
-    cursor = None
-
-    try:
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT
-                DATE_FORMAT(payment_date, '%Y-%m') AS month,
-                COALESCE(SUM(amount), 0) AS revenue
-            FROM payments
-            WHERE status = 'Paid'
-              AND payment_date IS NOT NULL
-            GROUP BY DATE_FORMAT(payment_date, '%Y-%m')
-            ORDER BY month
-        """)
-
-        return cursor.fetchall()
-
-    except Error as e:
-        print("Monthly Revenue Error:", e)
-        return []
-
-    finally:
-        if cursor is not None:
-            cursor.close()
-        conn.close()
