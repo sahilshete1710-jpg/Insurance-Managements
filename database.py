@@ -10,14 +10,11 @@ import os
 # Change the password if your MySQL root password is different.
 
 DB_CONFIG = {
-    "host": os.getenv("INSURANCE_DB_HOST", "localhost"),
-    "user": os.getenv("INSURANCE_DB_USER", "root"),
-    # Change this fallback to your actual MySQL password, or set
-    # INSURANCE_DB_PASSWORD in your Windows environment.
-    "password": os.getenv("INSURANCE_DB_PASSWORD", "root123"),
-    "database": os.getenv("INSURANCE_DB_NAME", "insurance_management"),
+    "host": "localhost",
+    "user": "root",
+    "password": "root123",
+    "database": "insurance_management",
 }
-
 
 # =========================================================
 # DATABASE CONNECTION
