@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% block content %}
+<h2>Issue New Policy</h2>
+<form class="box" method="post">
+<label>Customer</label><select name="customer_id" required><option value="">-- select --</option>
+{% for c in custs %}<option value="{{ c.id }}">{{ c.full_name }} ({{ c.email }})</option>{% endfor %}</select>
+<label>Plan</label><select name="plan_id" id="plan" required><option value="">-- select --</option>
+{% for p in plans %}<option value="{{ p.id }}" data-cov="{{ p.coverage_amount|money }}" data-prem="{{ p.annual_premium|money }}" data-term="{{ p.term_years }}">{{ p.category }} - {{ p.name }}</option>{% endfor %}</select>
+<div class="hint" id="info"></div>
+<label>Start date</label><input type="date" name="start_date" value="{{ today }}" required>
+<br><br><button class="btn">Issue Policy</button> <a class="btn gray" href="{{ url_for('policies') }}">Cancel</a></form>
+<script>
+document.getElementById('plan').addEventListener('change',e=>{const o=e.target.selectedOptions[0];
+document.getElementById('info').textContent=o.dataset.cov?`Coverage ${o.dataset.cov} · Premium ${o.dataset.prem}/yr · Term ${o.dataset.term} yr`:'';});
+</script>{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<h2>{{ 'Edit' if c else 'New' }} Customer</h2>
+<form class="box" method="post">
+<label>Full name</label><input name="full_name" required value="{{ c.full_name if c else '' }}">
+<label>Email</label><input type="email" name="email" required value="{{ c.email if c else '' }}">
+<label>Phone</label><input name="phone" required pattern="[0-9+\- ]{7,20}" value="{{ c.phone if c else '' }}">
+<label>Date of birth</label><input type="date" name="dob" value="{{ c.dob if c and c.dob else '' }}">
+<label>Address</label><input name="address" value="{{ c.address if c and c.address else '' }}">
+<br><br><button class="btn">Save</button> <a class="btn gray" href="{{ url_for('customers') }}">Cancel</a></form>
+{% endblock %}

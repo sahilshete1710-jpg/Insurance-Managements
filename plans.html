@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block content %}
+<h2>Insurance Plans</h2>
+<form class="box" method="post">
+<label>Plan name</label><input name="name" required>
+<label>Category</label><select name="category">
+{% for c in ['Health','Life','Vehicle','Home','Travel'] %}<option>{{ c }}</option>{% endfor %}</select>
+<label>Coverage amount (₹)</label><input type="number" name="coverage_amount" min="1" step="0.01" required>
+<label>Annual premium (₹)</label><input type="number" name="annual_premium" min="1" step="0.01" required>
+<label>Term (years)</label><input type="number" name="term_years" value="1" min="1" max="40" required>
+<label>Description</label><input name="description">
+<br><br><button class="btn green">Add Plan</button></form>
+<table><tr><th>Plan</th><th>Category</th><th>Coverage</th><th>Premium / yr</th><th>Term</th><th>Policies</th><th></th></tr>
+{% for p in rows %}<tr><td><b>{{ p.name }}</b><br><small>{{ p.description or '' }}</small></td><td>{{ p.category }}</td>
+<td>{{ p.coverage_amount|money }}</td><td>{{ p.annual_premium|money }}</td><td>{{ p.term_years }} yr</td><td>{{ p.policy_count }}</td>
+<td><form class="inline" method="post" action="{{ url_for('plan_delete', pid=p.id) }}" onsubmit="return confirm('Delete plan?')"><button class="btn red">Delete</button></form></td></tr>{% endfor %}</table>
+{% endblock %}
