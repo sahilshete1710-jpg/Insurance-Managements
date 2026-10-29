@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<h2>Customers</h2>
+<form class="toolbar" method="get"><input name="q" value="{{ q }}" placeholder="Search name, email or phone...">
+<button class="btn">Search</button>
+{% if q %}<a class="btn gray" href="{{ url_for('customers') }}">Clear</a>{% endif %}
+<a class="btn green" href="{{ url_for('customer_form') }}">+ New Customer</a></form>
+<table><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>DOB</th><th>Policies</th><th>Actions</th></tr>
+{% for c in rows %}<tr><td>{{ c.id }}</td><td>{{ c.full_name }}</td><td>{{ c.email }}</td><td>{{ c.phone }}</td>
+<td>{{ c.dob or '-' }}</td><td>{{ c.policy_count }}</td>
+<td class="actions"><a class="btn" href="{{ url_for('customer_form', cid=c.id) }}">Edit</a>
+<form class="inline" method="post" action="{{ url_for('customer_delete', cid=c.id) }}" onsubmit="return confirm('Delete customer and ALL their policies?')"><button class="btn red">Delete</button></form></td></tr>
+{% else %}<tr><td colspan="7">No customers found.</td></tr>{% endfor %}</table>
+{% endblock %}

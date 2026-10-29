@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<h2>File a Claim</h2>
+<form class="box" method="post">
+<label>Active policy</label><select name="policy_id" id="pol" required><option value="">-- select --</option>
+{% for p in pols %}<option value="{{ p.id }}" data-cov="{{ p.coverage_amount|money }}">{{ p.policy_no }} - {{ p.full_name }} ({{ p.plan_name }})</option>{% endfor %}</select>
+<div class="hint" id="info"></div>
+<label>Claim amount (₹)</label><input type="number" name="claim_amount" min="1" step="0.01" required>
+<label>Reason</label><textarea name="reason" rows="3" required maxlength="255"></textarea>
+<br><button class="btn">Submit Claim</button> <a class="btn gray" href="{{ url_for('claims') }}">Cancel</a></form>
+<script>
+document.getElementById('pol').addEventListener('change',e=>{const o=e.target.selectedOptions[0];
+document.getElementById('info').textContent=o.dataset.cov?`Coverage limit: ${o.dataset.cov}`:'';});
+</script>{% endblock %}

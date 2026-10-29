@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Insurance</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body>
+{% if session.user %}
+<nav><span class="brand">🛡️ Smart Insurance</span>
+<a href="{{ url_for('dashboard') }}">Dashboard</a>
+<a href="{{ url_for('customers') }}">Customers</a>
+<a href="{{ url_for('plans') }}">Plans</a>
+<a href="{{ url_for('policies') }}">Policies</a>
+<a href="{{ url_for('claims') }}">Claims</a>
+<a href="{{ url_for('payments') }}">Payments</a>
+<a href="{{ url_for('logout') }}">Logout ({{ session.user }})</a></nav>
+{% endif %}
+<div class="container">
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}{% endwith %}
+{% block content %}{% endblock %}
+</div></body></html>
