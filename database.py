@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 from datetime import datetime
 import hashlib
+import os
 
 # =========================================================
 # MYSQL CONFIGURATION
@@ -9,10 +10,12 @@ import hashlib
 # Change the password if your MySQL root password is different.
 
 DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "root123",
-    "database": "insurance_management",
+    "host": os.getenv("INSURANCE_DB_HOST", "localhost"),
+    "user": os.getenv("INSURANCE_DB_USER", "root"),
+    # Change this fallback to your actual MySQL password, or set
+    # INSURANCE_DB_PASSWORD in your Windows environment.
+    "password": os.getenv("INSURANCE_DB_PASSWORD", "root123"),
+    "database": os.getenv("INSURANCE_DB_NAME", "insurance_management"),
 }
 
 
@@ -29,6 +32,10 @@ def get_connection():
 
     except Error as e:
         print("MySQL Connection Error:", e)
+        print(
+            "Check that MySQL Server is running, the database exists, "
+            "and INSURANCE_DB_USER / INSURANCE_DB_PASSWORD are correct."
+        )
 
     return None
 
