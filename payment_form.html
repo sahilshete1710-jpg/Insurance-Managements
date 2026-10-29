@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block content %}
+<h2>Record Payment</h2>
+<form class="box" method="post">
+<label>Active policy</label><select name="policy_id" id="pol" required><option value="">-- select --</option>
+{% for p in pols %}<option value="{{ p.id }}" data-prem="{{ p.premium }}">{{ p.policy_no }} - {{ p.full_name }}</option>{% endfor %}</select>
+<label>Amount (₹)</label><input type="number" id="amt" name="amount" min="1" step="0.01" required>
+<label>Method</label><select name="method">{% for m in ['UPI','Card','Net Banking','Cash'] %}<option>{{ m }}</option>{% endfor %}</select>
+<br><br><button class="btn">Save Payment</button> <a class="btn gray" href="{{ url_for('payments') }}">Cancel</a></form>
+<script>
+document.getElementById('pol').addEventListener('change',e=>{const o=e.target.selectedOptions[0];
+if(o.dataset.prem)document.getElementById('amt').value=o.dataset.prem;});
+</script>{% endblock %}

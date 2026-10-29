@@ -1,0 +1,12 @@
+{% extends "base.html" %}{% block content %}
+<h2>Policies</h2>
+<form class="toolbar" method="get"><select name="status" onchange="this.form.submit()" style="max-width:200px">
+<option value="">All statuses</option>{% for s in ['Active','Expired','Cancelled'] %}<option {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}</select>
+<a class="btn green" href="{{ url_for('policy_new') }}">+ Issue Policy</a></form>
+<table><tr><th>Policy no.</th><th>Customer</th><th>Plan</th><th>Start</th><th>End</th><th>Premium</th><th>Status</th><th></th></tr>
+{% for p in rows %}<tr><td>{{ p.policy_no }}</td><td>{{ p.full_name }}</td><td>{{ p.plan_name }} <small>({{ p.category }})</small></td>
+<td>{{ p.start_date }}</td><td>{{ p.end_date }}</td><td>{{ p.premium|money }}</td>
+<td><span class="badge {{ p.status|lower }}">{{ p.status }}</span></td>
+<td>{% if p.status=='Active' %}<form class="inline" method="post" action="{{ url_for('policy_cancel', pid=p.id) }}" onsubmit="return confirm('Cancel this policy?')"><button class="btn red">Cancel</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="8">No policies.</td></tr>{% endfor %}</table>
+{% endblock %}

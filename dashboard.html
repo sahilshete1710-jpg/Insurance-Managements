@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block content %}
+<h2>Dashboard</h2>
+<div class="cards">
+<div class="card"><h3>{{ stats.customers }}</h3><p>Customers</p></div>
+<div class="card"><h3>{{ stats.active_policies }}</h3><p>Active policies</p></div>
+<div class="card"><h3>{{ stats.pending_claims }}</h3><p>Pending claims</p></div>
+<div class="card"><h3>{{ stats.revenue|money }}</h3><p>Premium collected</p></div>
+<div class="card"><h3>{{ stats.payouts|money }}</h3><p>Claims paid out</p></div>
+</div>
+<div class="charts">
+<div class="card"><b>Policies by category</b><canvas id="c1"></canvas></div>
+<div class="card"><b>Claims by status</b><canvas id="c2"></canvas></div>
+</div>
+<h3>Policies expiring within 30 days</h3>
+<table><tr><th>Policy</th><th>Customer</th><th>Plan</th><th>Expires</th></tr>
+{% for p in expiring %}<tr><td>{{ p.policy_no }}</td><td>{{ p.full_name }}</td><td>{{ p.plan_name }}</td><td>{{ p.end_date }}</td></tr>
+{% else %}<tr><td colspan="4">Nothing expiring soon.</td></tr>{% endfor %}</table>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+const cat={{ by_cat|tojson }}, st={{ by_status|tojson }};
+const colors=['#0f2a5c','#2e7dd7','#1e8e4e','#e0a800','#c0392b'];
+new Chart(document.getElementById('c1'),{type:'doughnut',data:{labels:cat.map(x=>x.label),datasets:[{data:cat.map(x=>x.n),backgroundColor:colors}]}});
+new Chart(document.getElementById('c2'),{type:'bar',data:{labels:st.map(x=>x.label),datasets:[{label:'Claims',data:st.map(x=>x.n),backgroundColor:colors}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+</script>
+{% endblock %}

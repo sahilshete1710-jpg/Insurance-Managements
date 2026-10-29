@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% block content %}
+<h2>Premium Payments</h2>
+<div class="toolbar"><a class="btn green" href="{{ url_for('payment_new') }}">+ Record Payment</a>
+<span class="hint" style="align-self:center">Total collected: <b>{{ total|money }}</b></span></div>
+<table><tr><th>Reference</th><th>Policy</th><th>Customer</th><th>Amount</th><th>Date</th><th>Method</th></tr>
+{% for p in rows %}<tr><td>{{ p.reference }}</td><td>{{ p.policy_no }}</td><td>{{ p.full_name }}</td><td>{{ p.amount|money }}</td><td>{{ p.paid_on }}</td><td>{{ p.method }}</td></tr>
+{% else %}<tr><td colspan="6">No payments yet.</td></tr>{% endfor %}</table>
+{% endblock %}

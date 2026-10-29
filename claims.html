@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block content %}
+<h2>Claims</h2>
+<form class="toolbar" method="get"><select name="status" onchange="this.form.submit()" style="max-width:200px">
+<option value="">All statuses</option>{% for s in ['Pending','Approved','Rejected'] %}<option {{ 'selected' if status==s }}>{{ s }}</option>{% endfor %}</select>
+<a class="btn green" href="{{ url_for('claim_new') }}">+ File Claim</a></form>
+<table><tr><th>Claim</th><th>Policy</th><th>Customer</th><th>Amount</th><th>Reason</th><th>Filed</th><th>Status</th><th>Action</th></tr>
+{% for c in rows %}<tr><td>{{ c.claim_no }}</td><td>{{ c.policy_no }}</td><td>{{ c.full_name }}</td><td>{{ c.claim_amount|money }}</td>
+<td>{{ c.reason }}{% if c.remarks %}<br><small>Note: {{ c.remarks }}</small>{% endif %}</td><td>{{ c.filed_on }}</td>
+<td><span class="badge {{ c.status|lower }}">{{ c.status }}</span></td>
+<td>{% if c.status=='Pending' %}
+<form method="post" class="actions"><input name="remarks" placeholder="Remarks" style="width:120px">
+<button class="btn green" formaction="{{ url_for('claim_action', cid=c.id, action='approve') }}">Approve</button>
+<button class="btn red" formaction="{{ url_for('claim_action', cid=c.id, action='reject') }}">Reject</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="8">No claims.</td></tr>{% endfor %}</table>
+{% endblock %}
