@@ -3,7 +3,6 @@ from mysql.connector import Error
 from datetime import datetime
 import hashlib
 
-
 # =========================================================
 # MYSQL CONFIGURATION
 # =========================================================
